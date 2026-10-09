@@ -1,0 +1,33 @@
+# Config nginx du conteneur frontend.
+# Les ${VARIABLES} sont remplacées au démarrage par les variables d'environnement.
+server {
+  listen 80;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  # Les appels /api/... sont transmis au conteneur "backend" (même réseau Docker).
+  # Résultat : le navigateur parle toujours au même domaine -> pas de CORS.
+  # L'IP 127.0.0.11 est le DNS interne de Docker ; passer par une variable évite
+  # que nginx plante au démarrage si le back n'est pas (encore) lancé.
+  location /api/ {
+    resolver 127.0.0.11 valid=10s;
+    set $back_upstream http://backend:${BACK_PORT};
+    proxy_pass $back_upstream;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  # Angular = SPA : toute URL inconnue renvoie index.html (le routeur prend le relais)
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+
+  # Fichiers générés par le build (nom hashé) : cache long
+  location ~* \.(js|css|woff2?|png|jpg|svg|ico)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    try_files $uri =404;
+  }
+}
