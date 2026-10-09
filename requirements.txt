@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pandas
+openpyxl
+openai
+python-dotenv
+requests
+pytest
+httpx
+sqlalchemy
+psycopg[binary]
