@@ -29,16 +29,20 @@ C'est une preuve de concept, pas un système réglementaire officiel.
 
 ## Architecture
 sources officielles → scripts/ingest_xx.py (coéquipiers) → data/incoming/xx_*.csv (format du starter kit)
-→ scripts/normalize.py (normalisation EPPO / ingrédients / produits sœurs, sans base)
-→ scripts/load_db.py (charge les CSV dans PostgreSQL)
-→ PostgreSQL : schéma dans db/schema.sql (tables ACTIVE_ENTITY, PRODUCT, PRODUCT_COMPONENT, PRODUCT_NAME,
-  JURISDICTION, REGISTRATION, REGISTRATION_VERSION, AUTHORIZED_USE, APPLICATION_RULE, USE_CROP, USE_TARGET,
-  SOURCE, SOURCE_SNAPSHOT, EVIDENCE). Connexion UNIQUEMENT via DATABASE_URL dans .env (jamais d'identifiants dans le code).
-  docker-compose.yml permet de relancer la même base en local.
-→ api/main.py (FastAPI, contrat EXACT de schema/openapi.yaml + /products/{id}/sisters + /export)
+→ backend/etl/normalize.py (normalisation EPPO / ingrédients / produits sœurs, sans base)
+→ backend/etl/load_db.py (charge les CSV dans PostgreSQL)
+→ PostgreSQL (serveur d'équipe, URL dans DATABASE_URL du .env ; jamais d'identifiants dans le code).
+  Tables = celles du starter kit : products, product_aliases, registrations, uses, source_registry,
+  eppo_crop_mapping, eppo_pest_mapping, active_entity_mapping, product_name_mapping
+  + collection_runs (journal des collectes) + field_evidence (preuve champ par champ, confiance, méthode, modèle)
+  + vue v_comparison (tableau produit × pays × usage). Schéma exporté dans db/schema.sql.
+→ backend/app/ (FastAPI) : contrat EXACT de schema/openapi.yaml + /products/{id}/sisters + /export.
+  Routes exposées à la fois à la racine (/products…) et sous /api (/api/products…) car le nginx du frontend transmet /api/ sans retirer le préfixe.
+  Port = variable BACK_PORT (défaut 3000). backend/Dockerfile pour docker compose (profil "backend").
 → /ask : agent LLM à outils + garde-fous (citations d'ID vérifiées, chiffres vérifiés, résultat vide = message fixe)
-→ frontend/ (Angular, coéquipier ; développe d'abord sur un mock Prism de openapi.yaml, puis l'API réelle sur :8000)
+→ frontend/ (Angular, Damien) : appelle /api/... ; développe d'abord sur un mock Prism de schema/openapi.yaml.
 → intégration Microsoft 365 (connecteur Power Automate / Copilot Studio, export Excel).
+Ne pas toucher frontend/ (sauf demande explicite). Ne pas modifier les fichiers du starter kit.
 
 ## Contrats à respecter
 - Colonnes : data/field_dictionary.csv, data/products.csv, data/registrations.csv, data/uses.csv
