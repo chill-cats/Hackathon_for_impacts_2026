@@ -12,10 +12,10 @@
 #
 #  Commandes utiles (à lancer à la racine du repo) :
 #    docker compose up -d --build                  front seul (état actuel)
-#    docker compose --profile back up -d --build   front + back + base de données
+#    docker compose --profile backend up -d --build   front + back + base de données
 #    docker compose ps                             état des services
-#    docker compose logs -f back                   logs en direct d'un service
-#    docker compose restart back                   redémarrer un service
+#    docker compose logs -f backend                   logs en direct d'un service
+#    docker compose restart backend                   redémarrer un service
 #    docker compose down                           tout arrêter (données conservées)
 #    docker compose down -v                        tout arrêter ET EFFACER la base !
 #
@@ -26,9 +26,9 @@ services:
   # ---------------------------------------------------------------------------
   # FRONT : Angular compilé, servi par nginx. Actif par défaut.
   # ---------------------------------------------------------------------------
-  front:
+  frontend:
     build:
-      context: ./front              # dossier contenant le Dockerfile
+      context: ./frontend              # dossier contenant le Dockerfile
       args:
         FRONT_API_URL: ${FRONT_API_URL:-/api}
     env_file:
@@ -39,13 +39,13 @@ services:
 
   # ---------------------------------------------------------------------------
   # BACK : à activer quand la techno sera choisie.
-  # `profiles` = service ignoré tant qu'on ne lance pas avec `--profile back`.
+  # `profiles` = service ignoré tant qu'on ne lance pas avec `--profile backend`.
   # Pour l'activer pour de bon : supprimer les 2 lignes `profiles`.
   # ---------------------------------------------------------------------------
-  back:
-    profiles: ["back"]
+  backend:
+    profiles: ["backend"]
     build:
-      context: ./back               # attend un back/Dockerfile (à écrire selon la techno)
+      context: ./backend               # attend un backend/Dockerfile (à écrire selon la techno)
     env_file:
       - .env                        # injecte TOUTES les variables du .env racine dans le conteneur
     ports:
@@ -61,7 +61,7 @@ services:
   # Pour s'y connecter depuis ta machine, ajouter : ports: ["3306:3306"]
   # ---------------------------------------------------------------------------
   db:
-    profiles: ["back"]
+    profiles: ["backend"]
     image: mysql:8.4
     env_file:
       - .env                        # l'image MySQL lit MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD

@@ -4,21 +4,21 @@
 !.env.example
 
 # --- Front (Angular) ---------------------------------------------------------
-front/node_modules/
-front/dist/
-front/.angular/
-front/coverage/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
 # généré par scripts/generate-env.mjs
-front/src/environments/
+frontend/src/environments/
 
 # --- Back (génériques, à compléter selon la techno choisie) ------------------
-back/node_modules/
-back/vendor/
-back/dist/
-back/build/
-back/__pycache__/
-back/.venv/
-back/storage/logs/
+backend/node_modules/
+backend/vendor/
+backend/dist/
+backend/build/
+backend/__pycache__/
+backend/.venv/
+backend/storage/logs/
 
 # --- Docker ------------------------------------------------------------------
 # surcharges locales perso

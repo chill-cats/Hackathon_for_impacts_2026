@@ -21,7 +21,7 @@ RUN node scripts/generate-env.mjs && pnpm exec ng build
 
 # --- Étape 2 : serveur nginx -------------------------------------------------
 FROM nginx:alpine
-COPY --from=build /app/dist/front/browser /usr/share/nginx/html
+COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 # Les fichiers de /etc/nginx/templates sont passés à envsubst au démarrage
 COPY docker/default.conf.template /etc/nginx/templates/default.conf.template
 EXPOSE 80
