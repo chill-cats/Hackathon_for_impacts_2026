@@ -1,4 +1,4 @@
-# SporaDar — le radar réglementaire du biocontrôle
+# SporaDar — Le radar réglementaire du biocontrôle
 
 **SporaDar** est un agent IA qui collecte, normalise, compare et restitue les homologations de produits de protection des
 plantes (**produit × pays × usage**) à partir de bases officielles (France, Allemagne, Canada), et répond en langage naturel
