@@ -92,7 +92,7 @@ Le front Angular et le `docker-compose.yml` viennent du coéquipier front. Dossi
 
 ```
 .
-├── frontend/            Angular 22 (front only, pnpm)
+├── frontend/            Angular 22 + Tailwind 4 + Spartan NG (front only, pnpm)
 ├── backend/             Backend (techno à définir)
 ├── docker-compose.yml   Lance toute la stack (commenté, à lire !)
 ├── .env.example         Modèle des variables d'environnement (front + back + docker)
@@ -130,6 +130,12 @@ Ajouter une variable front : la déclarer `FRONT_XXX` dans `.env.example` et `.e
 4. Mise à jour : `git pull && docker compose --profile backend up -d --build`
 
 Le front appelle `/api/...` : nginx (dans le conteneur front) redirige vers le service `backend`.
+
+## UI : Tailwind + Spartan NG
+
+- Styles globaux dans `frontend/src/styles.css` (Tailwind 4 + thème Spartan, via `.postcssrc.json`).
+- Les composants Spartan sont **copiés dans le repo** (`frontend/src/app/ui/`, modifiables) et importés via l'alias `@spartan-ng/helm/<composant>`.
+- Ajouter un composant : `cd frontend && pnpm exec ng g @spartan-ng/cli:ui <nom>` (ex : `input`, `dialog`).
 
 ## Back-end Python : API et agent `/ask`
 

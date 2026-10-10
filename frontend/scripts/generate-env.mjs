@@ -5,6 +5,11 @@
 //   2. dans Docker : le `.env` n'est pas dans le contexte de build, les valeurs
 //      arrivent via process.env (build args du docker-compose.yml)
 // Les variables déjà présentes dans process.env sont prioritaires.
+//
+// Options :
+//   --mock   force le mode mock (données fictives servies par Prism), utilisé par `pnpm start:mock`
+//
+// ATTENTION : tout ce qui est écrit ici finit dans le JavaScript public. Jamais de clé ni de secret.
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,8 +21,14 @@ if (existsSync(rootEnvFile)) {
   process.loadEnvFile(rootEnvFile); // n'écrase pas les variables déjà définies
 }
 
+const isTrue = (value) => ['1', 'true', 'yes', 'on'].includes(String(value ?? '').toLowerCase());
+
 const environment = {
   apiUrl: process.env.FRONT_API_URL ?? '/api',
+  // Mode mock : le front ajoute l'en-tête `Prefer: example=<nom>` pour choisir la réponse de Prism.
+  mock: process.argv.includes('--mock') || isTrue(process.env.FRONT_MOCK),
+  // Mode démo hors ligne : rejoue les exemples fictifs sans aucun serveur (filet de sécurité du pitch).
+  offlineDemo: isTrue(process.env.FRONT_OFFLINE_DEMO),
 };
 
 const target = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'environments', 'environment.ts');
@@ -26,4 +37,6 @@ writeFileSync(
   target,
   `// FICHIER GÉNÉRÉ par scripts/generate-env.mjs - ne pas éditer (modifier le .env racine)\nexport const environment = ${JSON.stringify(environment, null, 2)} as const;\n`,
 );
-console.log(`[env] ${target} généré (apiUrl=${environment.apiUrl})`);
+console.log(
+  `[env] ${target} généré (apiUrl=${environment.apiUrl}, mock=${environment.mock}, offlineDemo=${environment.offlineDemo})`,
+);

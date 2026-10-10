@@ -1,0 +1,10 @@
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+@import 'tw-animate-css';
+@import '@spartan-ng/brain/hlm-tailwind-preset.css';
+
+/* Design system Atlas Homologations : tokens bruts, puis correspondance vers les variables Spartan. */
+@import './styles/atlas-tokens.css';
+@import './styles/spartan-theme.css';

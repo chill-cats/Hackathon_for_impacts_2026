@@ -1,14 +1,17 @@
 openapi: 3.1.0
 info:
   title: LPC Global Regulatory AI API
-  version: 0.2.1
+  version: 0.2.2
   description: |
     Hackathon contract for the Lallemand Plant Care regulatory intelligence agent.
 
     Extends the starter-kit contract (v0.1.0) without breaking it: every original
     route, field and required list is kept; everything new is optional or a new route.
     See docs/openapi-changes.md for what changed, why, and what it means for the backend.
+    v0.2.2: adds the optional Product.matchedVia (search results) and AnswerGenerator.mode, already returned by the backend.
     v0.2.1: aligned on the team PostgreSQL schema (db/schema.sql); no new column or table is needed.
+    Mock examples (synthetic, one per question type and per route) live in mocks/examples.yaml.
+    Prism serves them: `prism mock openapi.proposed.yaml`, pick one with the header `Prefer: example=<name>`.
 
     Rules every response follows:
     - Every regulatory value carries its evidence (source, record URL, collection date, validation status).
@@ -93,6 +96,9 @@ paths:
           description: Matching products
           content:
             application/json:
+              examples:
+                name_search: {$ref: 'mocks/examples.yaml#/products_name_search'}
+                ingredient_search: {$ref: 'mocks/examples.yaml#/products_ingredient_search'}
               schema:
                 type: object
                 required: [items]
@@ -126,6 +132,8 @@ paths:
           description: Registrations
           content:
             application/json:
+              examples:
+                m52: {$ref: 'mocks/examples.yaml#/registrations_m52'}
               schema:
                 type: object
                 required: [items, disclaimer]
@@ -163,6 +171,8 @@ paths:
           description: Candidates with evidence
           content:
             application/json:
+              examples:
+                m52: {$ref: 'mocks/examples.yaml#/sisters_m52'}
               schema: {$ref: '#/components/schemas/SisterCandidatesResponse'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '404':
@@ -206,8 +216,12 @@ paths:
           description: Comparison with evidence
           content:
             application/json:
+              examples:
+                m52_fr_ca: {$ref: 'mocks/examples.yaml#/compare_m52_fr_ca'}
               schema: {$ref: '#/components/schemas/ComparisonResponse'}
             text/csv:
+              examples:
+                m52_fr_ca: {$ref: 'mocks/examples.yaml#/compare_m52_fr_ca_csv'}
               schema: {type: string}
         '401': {$ref: '#/components/responses/Unauthorized'}
   /ask:
@@ -231,109 +245,17 @@ paths:
           description: Grounded answer
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/Answer'}
               examples:
-                registrationLookupM52:
-                  summary: Where is LALGUARD M52 OD registered? (synthetic data)
-                  value:
-                    answerId: ANS-SYN-0001
-                    generatedAt: '2026-10-10T08:00:00Z'
-                    language: fr
-                    intent: registration_lookup
-                    answerStatus: partial
-                    parameters:
-                      productIds: [P-LPC-M52]
-                      countries: []
-                    answer: >-
-                      LALGUARD M52 OD : enregistrement trouvé dans 2 des 3 pays interrogés (France validé,
-                      Canada à vérifier). Rien trouvé en Allemagne dans la base BVL, ce qui ne prouve pas
-                      l'absence d'homologation. 7 marchés cibles ne sont pas encore couverts.
-                    facts:
-                      - factId: F1
-                        label: Statut en France
-                        field: registration.statusNormalized
-                        value: active
-                        valueOriginal: Autorisé
-                        productId: P-LPC-M52
-                        countryCode: FR
-                        validationStatus: validated
-                        evidenceIds: [EV-SYN-FR-1]
-                      - factId: F2
-                        label: Statut au Canada
-                        field: registration.statusNormalized
-                        value: active
-                        valueOriginal: Registered
-                        productId: P-LPC-M52
-                        countryCode: CA
-                        validationStatus: to_verify
-                        confidence: 0.9
-                        evidenceIds: [EV-SYN-CA-1]
-                    registrations:
-                      - registrationId: R-SYN-FR-1
-                        productId: P-LPC-M52
-                        countryCode: FR
-                        authorityName: ANSES
-                        registrationNumber: SYN-0000001
-                        statusOriginal: Autorisé
-                        statusNormalized: active
-                        productNameOriginal: LALGUARD M52 OD
-                        matchedVia: {matchedName: LALGUARD M52 OD, matchedOn: commercial_name}
-                        isSynthetic: true
-                        evidence:
-                          evidenceId: EV-SYN-FR-1
-                          sourceId: FR-EPHY
-                          sourceName: ANSES E-Phy Open Data
-                          sourceUrl: https://www.data.gouv.fr/
-                          sourceRecordUrl: https://ephy.anses.fr/
-                          collectedAt: '2026-10-10T03:12:00Z'
-                          validationStatus: validated
-                          isSynthetic: true
-                      - registrationId: R-SYN-CA-1
-                        productId: P-LPC-M52
-                        countryCode: CA
-                        authorityName: PMRA
-                        registrationNumber: SYN-00001
-                        statusOriginal: Registered
-                        statusNormalized: active
-                        productNameOriginal: SYNTHETIC F52 PRODUCT
-                        activeEntityOriginal: Metarhizium anisopliae strain F52
-                        matchedVia:
-                          matchedName: Metarhizium anisopliae F52
-                          matchedOn: active_entity_alias
-                          aliasRelationshipType: former_taxonomic_name
-                          aliasReviewStatus: to_verify
-                          aliasConfidenceScore: 0.9
-                        isSynthetic: true
-                        evidence:
-                          evidenceId: EV-SYN-CA-1
-                          sourceId: CA-PPID
-                          sourceName: Health Canada PPID
-                          sourceUrl: https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0
-                          collectedAt: '2026-10-10T03:20:00Z'
-                          validationStatus: to_verify
-                          confidence: 0.9
-                          isSynthetic: true
-                    coverage:
-                      - {countryCode: FR, outcome: found, sourceIds: [FR-EPHY], lastCollectedAt: '2026-10-10T03:12:00Z', registrationIds: [R-SYN-FR-1]}
-                      - {countryCode: CA, outcome: found, sourceIds: [CA-PPID], lastCollectedAt: '2026-10-10T03:20:00Z', registrationIds: [R-SYN-CA-1]}
-                      - countryCode: DE
-                        outcome: not_found
-                        sourceIds: [DE-BVL]
-                        lastCollectedAt: '2026-10-09T22:40:00Z'
-                        searchedTerms: [LALGUARD M52 OD, Metarhizium brunneum Ma 43, Metarhizium brunneum F52, Metarhizium anisopliae F52]
-                        note: Searched without result. Not proof of no registration.
-                      - {countryCode: US, outcome: not_covered, sourceIds: []}
-                    evidence:
-                      - {evidenceId: EV-SYN-FR-1, sourceId: FR-EPHY, sourceUrl: 'https://www.data.gouv.fr/', sourceRecordUrl: 'https://ephy.anses.fr/', collectedAt: '2026-10-10T03:12:00Z', validationStatus: validated, isSynthetic: true}
-                      - {evidenceId: EV-SYN-CA-1, sourceId: CA-PPID, sourceUrl: 'https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0', collectedAt: '2026-10-10T03:20:00Z', validationStatus: to_verify, confidence: 0.9, isSynthetic: true}
-                    suggestedQuestions:
-                      - {label: 'Comparer les usages FR et CA', question: 'Compare les usages de LALGUARD M52 OD entre la France et le Canada', intent: use_comparison}
-                      - {label: 'Champs à vérifier', question: 'Quels champs sont incertains pour LALGUARD M52 OD ?', intent: data_quality}
-                    warnings:
-                      - Canadian match found through the alias Metarhizium anisopliae F52, which is still to verify.
-                      - Synthetic example data.
-                    disclaimer: Regulatory Affairs validation is required.
-                    generator: {provider: configurable, model: configurable}
+                registration_lookup: {$ref: 'mocks/examples.yaml#/ask_registration_lookup'}
+                use_comparison: {$ref: 'mocks/examples.yaml#/ask_use_comparison'}
+                data_quality: {$ref: 'mocks/examples.yaml#/ask_data_quality'}
+                sister_product: {$ref: 'mocks/examples.yaml#/ask_sister_product'}
+                source_lookup: {$ref: 'mocks/examples.yaml#/ask_source_lookup'}
+                ingredient_search: {$ref: 'mocks/examples.yaml#/ask_ingredient_search'}
+                expiry_watch: {$ref: 'mocks/examples.yaml#/ask_expiry_watch'}
+                needs_clarification: {$ref: 'mocks/examples.yaml#/ask_needs_clarification'}
+                other: {$ref: 'mocks/examples.yaml#/ask_other'}
+              schema: {$ref: '#/components/schemas/Answer'}
         '401': {$ref: '#/components/responses/Unauthorized'}
   /issues:
     get:
@@ -358,6 +280,8 @@ paths:
           description: Issues found
           content:
             application/json:
+              examples:
+                m52: {$ref: 'mocks/examples.yaml#/issues_m52'}
               schema: {$ref: '#/components/schemas/IssuesResponse'}
         '401': {$ref: '#/components/responses/Unauthorized'}
   /expirations:
@@ -382,6 +306,8 @@ paths:
           description: Expiring registrations
           content:
             application/json:
+              examples:
+                next_12_months: {$ref: 'mocks/examples.yaml#/expirations_12_months'}
               schema: {$ref: '#/components/schemas/ExpirationsResponse'}
         '401': {$ref: '#/components/responses/Unauthorized'}
   /sources:
@@ -395,6 +321,8 @@ paths:
           description: Sources
           content:
             application/json:
+              examples:
+                all: {$ref: 'mocks/examples.yaml#/sources_all'}
               schema:
                 type: object
                 required: [items]
@@ -421,6 +349,8 @@ paths:
           description: Review recorded
           content:
             application/json:
+              examples:
+                alias_validated: {$ref: 'mocks/examples.yaml#/review_alias_validated'}
               schema: {$ref: '#/components/schemas/Review'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '404':
@@ -521,6 +451,9 @@ components:
           type: array
           description: Known product names and active-entity names (internal LPC mapping files).
           items: {$ref: '#/components/schemas/ProductAlias'}
+        matchedVia:
+          description: 'Only present on search results (GET /products): by which name, alias or active entity the product was found. Shown so users see when a match relies on an alias still to verify.'
+          $ref: '#/components/schemas/MatchedVia'
     Evidence:
       type: object
       required: [sourceId, sourceUrl, collectedAt, validationStatus]
@@ -888,6 +821,10 @@ components:
       properties:
         provider: {type: string}
         model: {type: string}
+        mode:
+          type: string
+          enum: [llm, keyword]
+          description: 'llm = the AI wrote the sentence (every figure and citation is checked by code); keyword = degraded mode without AI key (keyword understanding, template sentence).'
     ReviewRequest:
       type: object
       required: [targetType, targetId, decision]

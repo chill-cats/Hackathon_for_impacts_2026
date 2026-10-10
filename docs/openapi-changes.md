@@ -16,6 +16,7 @@
 | `openapi.proposed.yaml` | **Nouveau contrat de référence** (OpenAPI 3.1) |
 | `connector/power-platform.swagger.yaml` | Import dans Power Platform (Swagger 2.0) |
 | `docs/wireframes.html` | Gabarits de réponse par type de question |
+| `mocks/examples.yaml` | 19 réponses d'exemple fictives (une par type de question et par route), référencées par le contrat et servies par Prism |
 
 ## Le raisonnement : deux points de vue
 

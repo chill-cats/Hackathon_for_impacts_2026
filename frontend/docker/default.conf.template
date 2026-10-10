@@ -17,6 +17,9 @@ server {
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
+    # Clé d'API ajoutée ICI, côté serveur : elle n'est jamais envoyée au navigateur.
+    # Une valeur vide (API_KEY non renseignée) = nginx n'envoie pas l'en-tête.
+    proxy_set_header X-API-Key ${API_KEY};
   }
 
   # Angular = SPA : toute URL inconnue renvoie index.html (le routeur prend le relais)
