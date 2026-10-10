@@ -90,4 +90,5 @@ Sous Windows : lancer les scripts avec PYTHONIOENCODING=utf-8 si erreur d'affich
 - 09:50 : mot de passe DB changé par Nhan → DATABASE_URL à jour dans chaque .env (serveur + locaux). Jamais dans git.
 - Hébergement : serveur Vultr (Nhan). Pas de migration Azure ; Azure = argument de reprise (image Docker portable).
 - Hanane absente : docs/limitations.md + docs/regulatory_validation.md faits par Claude Code.
+- Connecteur Power Platform : import de `connector/power-platform.swagger.json` (généré depuis le .yaml par `scripts/build_connector.py`, testé par tests/test_connector.py), hôte `https://sporadar.nhanlenguyen.dev/api` (HTTPS par Nhan). Doc : docs/power-platform.md.
 - BACKEND GELÉ : seulement les bugs qui bloquent la démo. Gel total 13:00.

@@ -244,9 +244,9 @@ Ne jamais journaliser une clé ni la chaîne de connexion. En production, l'auth
 
 ## 10. Microsoft 365
 
-- Le connecteur Power Platform s'importe depuis `connector/power-platform.swagger.yaml` (Swagger 2.0, 4 opérations : `askRegulatoryQuestion`, `searchProducts`, `getProductRegistrations`, `compareProductUses`). Ne jamais changer ces `operationId` ni le sens de leurs champs ; si le contrat évolue sur ces 4 opérations, mettre ce fichier à jour.
+- Le connecteur Power Platform s'importe depuis `connector/power-platform.swagger.json`, généré par `scripts/build_connector.py` à partir de `connector/power-platform.swagger.yaml` (Swagger 2.0, 4 opérations : `askRegulatoryQuestion`, `searchProducts`, `getProductRegistrations`, `compareProductUses`). Ne jamais changer ces `operationId` ni le sens de leurs champs ; si le contrat évolue sur ces 4 opérations, mettre ce fichier à jour.
 - Copilot lit surtout `answer` : la phrase doit se suffire à elle-même et citer pays, statut et source.
-- Démo : tunnel HTTPS (ngrok ou cloudflared) vers le port du front (8080), qui sert l'app et `/api`. Procédure dans `docs/openapi-changes.md`, section Power Platform, à reprendre dans le README.
+- Démo : API publiée en HTTPS sur `https://sporadar.nhanlenguyen.dev/api` (mise en place par Nhan). Procédure complète : `docs/power-platform.md`.
 
 ## 11. Définition de « terminé »
 

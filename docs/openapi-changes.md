@@ -131,6 +131,8 @@ Fournisseur et modèle viennent de `AI_BASE_URL` / `AI_MODEL` (cf. `.env`) et so
 
 ## Power Platform
 
+> Procédure à jour (hôte HTTPS, import du `.json` généré, Copilot Studio, Power Automate) : `docs/power-platform.md`. Les étapes ci-dessous (tunnel ngrok sur le port 8080) sont l'ancienne version.
+
 1. Lancer la stack, puis un tunnel HTTPS (ngrok ou cloudflared) vers le port du front (`8080`) : il sert l'app **et** `/api`.
 2. Dans `connector/power-platform.swagger.yaml`, remplacer `host` par le domaine du tunnel.
 3. Power Apps / Copilot Studio → Connecteurs personnalisés → Importer un fichier OpenAPI → ce fichier. Authentification : clé API, en-tête `X-API-Key`.

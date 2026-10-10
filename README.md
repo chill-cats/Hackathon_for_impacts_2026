@@ -295,6 +295,8 @@ Teams may extend the contract but must not silently remove traceability fields.
 The included mapping files are deliberately small. Candidate codes are marked `to_verify`; teams must verify them against EPPO before changing the status to `validated`.
 
 ## Microsoft 365 interoperability
+Power Platform custom connector (Copilot Studio / Power Automate): see `docs/power-platform.md`.
+
 Demonstrate or document at least one: REST API importable as a custom connector, Dataverse export, SharePoint/Power Automate JSON or CSV flow, Copilot Studio action, Azure/Entra ID design, or Teams/SharePoint interface.
 
 ## Final checklist
