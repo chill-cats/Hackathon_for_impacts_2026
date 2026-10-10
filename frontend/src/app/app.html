@@ -1,112 +1,277 @@
 <div class="bg-brand h-[3px] w-full" aria-hidden="true"></div>
 
-<main class="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-12">
-  <header class="flex flex-wrap items-end justify-between gap-4">
-    <div class="flex flex-col gap-2">
-      <p class="type-caption text-ink-muted">Planche de vérification du thème</p>
-      <h1 class="type-display-xl">{{ title() }}</h1>
+<!-- Barre d'application -->
+<header class="bg-surface border-line border-b">
+  <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-3">
+    <div class="flex items-baseline gap-3">
+      <span class="type-display-m">Atlas homologations</span>
+      <span class="type-caption text-ink-muted">Lallemand Plant Care</span>
     </div>
-    <button hlmBtn variant="secondary" type="button" (click)="toggleTheme()">
-      <ng-icon [name]="dark() ? 'lucideSun' : 'lucideMoon'" />
-      {{ dark() ? 'Thème clair' : 'Thème sombre' }}
-    </button>
-  </header>
+    <div class="flex items-center gap-2">
+      <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleTheme()">
+        <ng-icon [name]="dark() ? 'lucideSun' : 'lucideMoon'" />
+        {{ dark() ? 'Thème clair' : 'Thème sombre' }}
+      </button>
+      <button hlmBtn variant="secondary" size="sm" type="button">
+        <ng-icon name="lucideDownload" />
+        Exporter vers Excel
+      </button>
+    </div>
+  </div>
+</header>
 
-  <section class="flex flex-col gap-4">
-    <h2 class="type-display-l">Boutons</h2>
+<main class="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-12 pb-16">
+  <!-- Titre de page + chiffres clés -->
+  <section class="flex flex-wrap items-end justify-between gap-8">
+    <div class="flex max-w-2xl flex-col gap-3">
+      <p class="type-caption text-ink-muted">Hackathon IA for Impact 2026 · Prototype</p>
+      <h1 class="type-display-xl">Homologations par pays</h1>
+      <p class="type-body text-ink">
+        Comparez, produit par produit, ce que chaque autorité publie, avec la source de chaque donnée.
+      </p>
+    </div>
+    <dl class="flex gap-8">
+      <div class="flex flex-col">
+        <dt class="type-caption text-ink-muted">Pays</dt>
+        <dd class="type-figure text-brand">3</dd>
+      </div>
+      <div class="flex flex-col">
+        <dt class="type-caption text-ink-muted">Usages</dt>
+        <dd class="type-figure text-brand">3</dd>
+      </div>
+      <div class="flex flex-col">
+        <dt class="type-caption text-ink-muted">À vérifier</dt>
+        <dd class="type-figure text-brand">1</dd>
+      </div>
+    </dl>
+  </section>
+
+  <!-- Disclaimer : présent sur chaque écran de résultats -->
+  <div hlmAlert>
+    <ng-icon name="lucideInfo" />
+    <h2 hlmAlertTitle class="text-ink-strong font-bold">Preuve de concept, pas un système réglementaire officiel</h2>
+    <p hlmAlertDescription>
+      Un résultat vide ne prouve jamais l'absence d'homologation. Les données de cette page sont fictives.
+    </p>
+  </div>
+
+  <!-- Poser une question -->
+  <section class="flex flex-col gap-3" aria-labelledby="ask-title">
+    <h2 id="ask-title" class="type-display-l">Poser une question</h2>
+    <label hlmLabel for="question" class="sr-only">Votre question</label>
+    <div
+      class="border-input bg-surface focus-within:outline-focus flex items-center gap-2 rounded-md border py-1 pr-1 pl-3 focus-within:outline-2 focus-within:outline-offset-2"
+    >
+      <ng-icon name="lucideSearch" class="text-ink-muted text-base" />
+      <input
+        id="question"
+        class="text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent py-1.5 text-base outline-none"
+        placeholder="Ex. : LALSTOP G46 WG est-il homologué sur tomate en France ?"
+        [value]="question()"
+        (input)="question.set($any($event.target).value)"
+      />
+      <button hlmBtn type="button">
+        Demander
+        <ng-icon name="lucideArrowRight" />
+      </button>
+    </div>
     <div class="flex flex-wrap items-center gap-2">
-      <button hlmBtn type="button">Comparer 3 pays</button>
-      <button hlmBtn variant="secondary" type="button">Exporter vers Excel</button>
-      <button hlmBtn variant="ghost" type="button">Annuler</button>
-      <button hlmBtn variant="link" type="button">Ouvrir la source</button>
-      <button hlmBtn variant="destructive" type="button">Rejeter</button>
-      <button hlmBtn size="sm" type="button">Valider</button>
-      <button hlmBtn type="button" disabled>Désactivé</button>
+      <span class="type-caption text-ink-muted">Essayer :</span>
+      @for (hint of hints; track hint) {
+        <button hlmBtn variant="secondary" size="sm" type="button" (click)="pickHint(hint)">{{ hint }}</button>
+      }
     </div>
   </section>
 
-  <section class="flex flex-col gap-4">
-    <h2 class="type-display-l">Statuts</h2>
+  <!-- Réponse de l'agent -->
+  <section hlmCard aria-labelledby="answer-title">
+    <div hlmCardHeader>
+      <h2 hlmCardTitle id="answer-title">Réponse</h2>
+    </div>
+    <div hlmCardContent class="flex flex-col gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <p class="type-body-sm text-ink-muted">
+          Question : <strong class="text-ink font-semibold">LALSTOP G46 WG est-il homologué sur tomate en France ?</strong>
+        </p>
+        <span
+          class="border-line-strong text-ink-strong inline-flex items-center gap-1 rounded-pill border px-2.5 py-0.5 text-xs font-semibold"
+        >
+          Mode règles · sans clé IA
+        </span>
+      </div>
+      <p class="type-body">
+        D'après la source <span class="type-code">FR-EPHY</span>, une ligne « Tomate · Botrytis cinerea · 2 kg/ha » est
+        publiée avec le statut Validé<a href="#src-2" class="type-code-sm text-link align-super underline underline-offset-2">[2]</a>.
+        Au Canada, une dose de 1,5 kg/ha est publiée pour le même usage<a href="#src-1" class="type-code-sm text-link align-super underline underline-offset-2">[1]</a>.
+        Aucune ligne n'a été trouvée en Allemagne : cela ne prouve pas une absence d'homologation.
+      </p>
+      <div class="border-line border-t pt-3">
+        <h3 class="type-display-m pb-1">Sources citées</h3>
+        <ol class="flex flex-col">
+          @for (c of citations.slice(0, 2); track c.n) {
+            <li [id]="'src-' + c.n" class="border-line grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-t py-3 first:border-t-0">
+              <span class="type-code-sm text-ink-muted pt-1">[{{ c.n }}]</span>
+              <div class="flex flex-col gap-1">
+                <div class="type-body-sm flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <span class="type-code text-ink-strong bg-surface-muted rounded-sm px-1.5">{{ c.sourceId }}</span>
+                  <span hlmBadge size="sm" [variant]="badge(c.status).variant">
+                    <ng-icon [name]="badge(c.status).icon" />{{ badge(c.status).label }}
+                  </span>
+                  <span class="type-code-sm text-ink-muted">collecté le {{ c.collectedAt }}</span>
+                  <a href="#" class="text-link inline-flex items-center gap-1 underline underline-offset-2">
+                    Ouvrir la source officielle <ng-icon name="lucideExternalLink" class="text-sm" />
+                  </a>
+                </div>
+                <p class="type-body-sm bg-surface-muted rounded-sm px-3 py-2">{{ c.excerpt }}</p>
+              </div>
+            </li>
+          }
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fiche produit -->
+  <section hlmCard aria-labelledby="product-title">
+    <div hlmCardContent class="grid gap-x-8 gap-y-4 md:grid-cols-[1fr_auto]">
+      <div class="flex flex-col gap-2">
+        <p class="type-caption text-ink-muted">Produit pilote</p>
+        <h2 id="product-title" class="type-display-l">LALSTOP G46 WG</h2>
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span class="type-code text-ink-strong bg-surface-muted rounded-sm px-1.5">P-DEMO-G46</span>
+          <span class="type-body-sm text-ink-muted">Granulés dispersibles (WG)</span>
+          <span class="type-body-sm text-ink-muted">Pays :</span>
+          @for (c of countries; track c.code) {
+            <span class="border-line-strong bg-surface inline-flex overflow-hidden rounded-sm border text-[13px] leading-[18px]">
+              <span class="type-code bg-primary text-primary-foreground px-1.5 py-0.5">{{ c.code }}</span>
+              <span class="text-ink-strong px-2 py-0.5 font-semibold">{{ c.authority }}</span>
+            </span>
+          }
+        </div>
+      </div>
+      <div class="flex flex-col items-start gap-2 md:items-end">
+        <span
+          class="border-line-strong bg-surface text-ink inline-flex items-center gap-2 rounded-sm border border-dashed py-px pr-2 pl-[3px] text-xs leading-4 font-semibold tracking-[0.04em] uppercase"
+        >
+          <span
+            class="size-2.5 rounded-[2px] bg-[repeating-linear-gradient(135deg,var(--synthetic-hatch)_0_3px,transparent_3px_6px)]"
+          ></span>
+          Donnée fictive
+        </span>
+        <div class="text-ink-muted flex items-center gap-2 text-xs leading-4">
+          <span>Confiance IA</span>
+          <span class="inline-flex gap-0.5" aria-hidden="true">
+            @for (i of confidence.segments; track i) {
+              <span class="h-1.5 w-2.5 rounded-[1px]" [class]="i < confidence.value * 5 ? 'bg-ink-muted' : 'bg-line'"></span>
+            }
+          </span>
+          <span class="type-code-sm text-ink">0,80</span>
+        </div>
+      </div>
+      <div class="border-line grid gap-4 border-t pt-4 md:col-span-2 md:grid-cols-[1fr_auto_1fr] md:items-start">
+        <div class="flex flex-col gap-0.5">
+          <span class="type-caption text-ink-muted">Matière active · valeur d'origine</span>
+          <span class="type-body-sm">« Gliocladium catenulatum J1446 »</span>
+        </div>
+        <ng-icon name="lucideArrowRight" class="text-ink-muted hidden pt-4 md:block" />
+        <div class="flex flex-col gap-0.5">
+          <span class="type-caption text-ink-muted">Matière active · valeur normalisée</span>
+          <span class="type-body-sm text-ink-strong font-semibold">Clonostachys rosea J1446</span>
+          <span class="inline-flex items-center gap-1">
+            <span class="type-code-sm bg-surface-muted text-ink-strong rounded-sm px-1.5">GLIOCA</span>
+            <span hlmBadge size="sm" variant="review"><ng-icon name="lucideCircleHelp" />À vérifier</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Matrice de comparaison -->
+  <section class="flex flex-col gap-3" aria-labelledby="matrix-title">
+    <h2 id="matrix-title" class="type-display-l">Comparaison des usages</h2>
+    <div hlmTableContainer>
+      <table hlmTable>
+        <caption class="sr-only">Homologations de LALSTOP G46 WG par usage et par pays</caption>
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh class="bg-surface-muted sticky left-0 min-w-56">Usage</th>
+            @for (c of countries; track c.code) {
+              <th hlmTh class="min-w-44">
+                <span class="border-line-strong bg-surface inline-flex overflow-hidden rounded-sm border text-[13px] leading-[18px] tracking-normal normal-case">
+                  <span class="type-code bg-primary text-primary-foreground px-1.5 py-0.5">{{ c.code }}</span>
+                  <span class="text-ink-strong px-2 py-0.5 font-semibold">{{ c.authority }}</span>
+                </span>
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody hlmTBody>
+          @for (row of rows; track row.id) {
+            <tr hlmTr>
+              <th scope="row" class="bg-surface border-line sticky left-0 border-r border-b px-3 py-2 text-start align-top font-normal">
+                <div class="text-ink-strong font-semibold">{{ row.crop }}</div>
+                <div class="text-ink">{{ row.target }}</div>
+                <div class="text-ink-muted text-xs leading-4">{{ row.cropOriginal }}</div>
+                <div class="mt-1 flex gap-1">
+                  <span class="type-code-sm bg-surface-muted text-ink-strong rounded-sm px-1.5">{{ row.cropEppo }}</span>
+                  <span class="type-code-sm bg-surface-muted text-ink-strong rounded-sm px-1.5">{{ row.targetEppo }}</span>
+                </div>
+              </th>
+              @for (c of countries; track c.code) {
+                @let cell = row.cells[c.code];
+                <td hlmTd class="align-top whitespace-normal">
+                  @if (cell) {
+                    <div class="flex flex-col items-start gap-1">
+                      <span class="text-ink font-semibold">
+                        {{ cell.dose }} <span class="text-ink-muted font-normal">{{ cell.unit }}</span>
+                      </span>
+                      <span hlmBadge size="sm" [variant]="badge(cell.status).variant">
+                        <ng-icon [name]="badge(cell.status).icon" />{{ badge(cell.status).label }}
+                      </span>
+                      <a [href]="'#src-' + cell.cite" class="type-code-sm text-link underline underline-offset-2">[{{ cell.cite }}]</a>
+                    </div>
+                  } @else {
+                    <div class="border-line-strong text-ink-muted inline-flex flex-col rounded-sm border border-dashed px-2 py-1 text-[13px] leading-[18px]">
+                      <strong class="text-ink font-semibold">Non trouvé</strong>
+                      <span>Pas une preuve d'absence</span>
+                    </div>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="type-caption text-ink-muted">Donnée fictive · valeurs d'origine entre guillemets, valeurs normalisées en gras</p>
+  </section>
+
+  <!-- État vide -->
+  <section class="flex flex-col gap-3" aria-labelledby="empty-title">
+    <h2 id="empty-title" class="type-display-l">Quand rien n'est trouvé</h2>
+    <div class="border-line-strong bg-surface flex flex-col gap-3 rounded-lg border border-dashed p-6">
+      <h3 class="type-display-m">Aucun résultat</h3>
+      <p class="text-ink-strong font-bold">Un résultat vide n'est jamais une preuve d'absence d'homologation.</p>
+      <p>
+        Aucune ligne n'a été trouvée pour « LALGUARD M52 OD » en Allemagne dans <span class="type-code">DE-BVL</span>.
+        Essayez un autre nom, ou cherchez par matière active : <em>Metarhizium brunneum</em> F52.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <button hlmBtn variant="secondary" size="sm" type="button">Chercher par matière active</button>
+        <button hlmBtn variant="ghost" size="sm" type="button">Voir les sources interrogées</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Statuts -->
+  <section class="flex flex-col gap-3" aria-labelledby="status-title">
+    <h2 id="status-title" class="type-display-l">Statuts</h2>
     <div class="flex flex-wrap items-center gap-2">
-      @for (status of statuses; track status.key) {
-        <span hlmBadge [variant]="status.variant">
-          <ng-icon [name]="status.icon" />
-          {{ status.label }}
+      @for (s of ['validated', 'to_verify', 'automatically_extracted', 'rejected', 'obsolete', 'source_unavailable', 'active', 'pending', 'withdrawn', 'expired', 'unknown']; track s) {
+        <span hlmBadge [variant]="badge($any(s)).variant">
+          <ng-icon [name]="badge($any(s)).icon" />{{ badge($any(s)).label }}
         </span>
       }
     </div>
-    <p class="type-code text-ink-muted">validation_status · status_normalized · FR-EPHY</p>
-  </section>
-
-  <section class="grid gap-6 md:grid-cols-2">
-    <div hlmCard>
-      <div hlmCardHeader>
-        <h3 hlmCardTitle>Poser une question</h3>
-      </div>
-      <div hlmCardContent class="flex flex-col gap-2">
-        <label hlmLabel for="question">Question</label>
-        <input hlmInput id="question" placeholder="LALSTOP G46 WG est-il homologué en France ?" />
-        <button hlmBtn type="button" class="self-start">Demander</button>
-      </div>
-    </div>
-
-    <div class="flex flex-col gap-4">
-      <div hlmAlert variant="warning">
-        <ng-icon name="lucideTriangleAlert" />
-        <h4 hlmAlertTitle>Non trouvé n'est pas une preuve d'absence</h4>
-        <p hlmAlertDescription>Un résultat vide ne permet pas de conclure à une absence d'homologation.</p>
-      </div>
-      <div hlmAlert>
-        <ng-icon name="lucideInfo" />
-        <h4 hlmAlertTitle>Prototype</h4>
-        <p hlmAlertDescription>Preuve de concept, pas un système réglementaire officiel.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="flex flex-col gap-4">
-    <h2 class="type-display-l">Comparaison</h2>
-    <hlm-tabs tab="table">
-      <hlm-tabs-list>
-        <button hlmTabsTrigger="table">Tableau</button>
-        <button hlmTabsTrigger="sources">Sources</button>
-      </hlm-tabs-list>
-      <div hlmTabsContent="table">
-        <div hlmTableContainer>
-          <table hlmTable>
-            <thead hlmTHead>
-              <tr hlmTr>
-                <th hlmTh>Culture</th>
-                <th hlmTh>Cible</th>
-                <th hlmTh>Pays</th>
-                <th hlmTh>Statut</th>
-              </tr>
-            </thead>
-            <tbody hlmTBody>
-              <tr hlmTr>
-                <td hlmTd>Tomate</td>
-                <td hlmTd>Pourriture grise</td>
-                <td hlmTd><span class="type-code">FR · ANSES</span></td>
-                <td hlmTd>
-                  <span hlmBadge variant="auto" size="sm"><ng-icon name="lucideSparkles" />Extraction auto</span>
-                </td>
-              </tr>
-              <tr hlmTr>
-                <td hlmTd>Colza</td>
-                <td hlmTd>Sclérotinia</td>
-                <td hlmTd><span class="type-code">DE · BVL</span></td>
-                <td hlmTd>
-                  <span hlmBadge variant="review" size="sm"><ng-icon name="lucideCircleHelp" />À vérifier</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="type-caption text-ink-muted pt-2">Donnée fictive</p>
-      </div>
-      <div hlmTabsContent="sources">
-        <p class="type-body-sm text-ink-muted pt-3">Les citations de sources s'affichent ici.</p>
-      </div>
-    </hlm-tabs>
   </section>
 </main>
