@@ -215,13 +215,12 @@ def find_concept(question, resolver):
 
 
 def find_months(clean_question):
-    """« dans les 12 prochains mois » -> 12 ; « 2 ans » -> 24 ; par défaut 12."""
-    match = re.search(r"(\d+)\s*(?:prochains?\s+)?mois", clean_question)
+    """« dans les 12 prochains mois » / « next 6 months » -> 6 ; « 2 ans » / « 2 years » -> 24 ; par défaut 12."""
+    match = re.search(r"(\d+)\s*(?:prochains?\s+)?(?:mois|months?)\b", clean_question)
     if match:
         return max(1, min(int(match.group(1)), 60))
-    match = re.search(r"(\d+)\s*(?:prochaines?\s+)?(?:ans?|annees?)\b", clean_question)
+    match = re.search(r"(\d+)\s*(?:prochaines?\s+)?(?:ans?|annees?|years?)\b", clean_question)
     return max(1, min(int(match.group(1)) * 12, 60)) if match else 12
-
 
 # ===========================================================================
 # a) COMPRENDRE
