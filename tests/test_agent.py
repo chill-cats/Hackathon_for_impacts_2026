@@ -100,7 +100,7 @@ class FakeServices:
                 "candidates": [cand("PNM-004", "PRESTOP", 0.85, [make_evidence("FR-EPHY-2120177")]),
                                cand("PNM-006", "LALFRESH S", 0.7, [])]}
 
-    def compare_uses(self, product_id, countries, crop, target, include_synthetic, limit, offset):
+    def compare_uses(self, product_id, countries, crop, target, include_synthetic, limit, offset, granularity="use"):
         regs = [r for r in ALL_REGS if r["countryCode"] in countries]
         fr_use, ca_use = make_use("U-FR-1", "FR-EPHY-2230771", "FR", 2.0), make_use("U-CA-1", "CA-PPID-28820", "CA", 3.5)
         row = {"rowId": "eppo:LYPES|eppo:BOTRCI", "cropNormalized": "Tomato", "eppoCropCode": "LYPES",
@@ -603,3 +603,24 @@ def test_row_key_aligns_by_normalized_name_when_a_country_has_no_eppo_code():
     (key_a, by_a), (key_b, by_b) = services.row_key(ca), services.row_key(other)
     assert key_a == key_b and by_a == by_b == "normalized_name"
     assert services.row_key({**ca, "cropNormalized": None, "targetNormalized": None})[1] == "original"
+
+
+def test_use_comparison_switches_to_crop_level_when_uses_do_not_match(no_ai, monkeypatch):
+    """Aucune ligne culture × cible commune FR/CA, mais une culture commune : bascule au niveau culture, et le dit."""
+    fake = FakeServices()
+    calls = []
+
+    def compare(product_id, countries, crop, target, include_synthetic, limit, offset, granularity="use"):
+        calls.append(granularity)
+        data = fake.compare_uses(product_id, countries, crop, target, include_synthetic, limit, offset, granularity)
+        if granularity == "use":   # une seule cellule présente par ligne : rien de comparable
+            for cell in data["rows"][0]["cells"]:
+                if cell["countryCode"] == "CA":
+                    cell["state"], cell["uses"] = "absent_in_extracted_uses", []
+        return data
+    for name in ("get_product", "search_products", "product_registrations", "sister_candidates", "registrations_of_products"):
+        monkeypatch.setattr(services, name, getattr(fake, name))
+    monkeypatch.setattr(services, "compare_uses", compare)
+    answer = ask("Compare LALSTOP G46 entre la France et le Canada", productId="P-LPC-G46", countries=["FR", "CA"])
+    assert calls == ["use", "crop"]
+    assert answer["answer"].startswith("Les données canadiennes ne précisent pas la cible : comparaison au niveau de la culture.")

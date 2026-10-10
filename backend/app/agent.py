@@ -591,6 +591,15 @@ def run_registration_lookup(plan, c):
 def run_use_comparison(plan, c):
     countries = plan.countries[:MAX_COUNTRIES]
     data = services.compare_uses(plan.product_id, countries, plan.crop, plan.target, False, 200, 0)
+    level, level_note = "use", None
+    if len(countries) >= 2 and not any(sum(x["state"] == "present" for x in r["cells"]) >= 2 for r in data.get("rows") or []):
+        # Aucune ligne culture × cible commune : on essaie le niveau culture (jamais d'alignement inventé)
+        by_crop = services.compare_uses(plan.product_id, countries, plan.crop, plan.target, False, 200, 0, "crop")
+        if any(sum(x["state"] == "present" for x in r["cells"]) >= 2 for r in by_crop.get("rows") or []):
+            data, level = by_crop, "crop"
+            level_note = "Les données canadiennes ne précisent pas la cible : comparaison au niveau de la culture."
+            if "CA" not in countries:
+                level_note = "Les cibles ne sont pas comparables entre ces pays : comparaison au niveau de la culture."
     # 2 homologations par pays suffisent pour citer le statut ; le détail est dans comparison.registrations
     shown = {}
     for reg in data["registrations"]:
@@ -608,7 +617,9 @@ def run_use_comparison(plan, c):
             for use in cell["uses"][:1]:   # un usage par pays et par ligne ; les autres sont dans le tableau
                 use_facts(c, use, cell["countryCode"], plan.product_id)
                 row_evidence.append(use["evidence"])
-        label = f"{row.get('cropNormalized') or '?'} × {row.get('targetNormalized') or '?'}"
+        label = row.get('cropNormalized') or '?'
+        if level == "use":
+            label += f" × {row.get('targetNormalized') or '?'}"
         c.add(f"{row['rowId']}#differs", f"Différence entre pays — {label}", row["differsAcrossCountries"], row_evidence,
               field_name="comparison.differsAcrossCountries", product_id=plan.product_id)
     counters, cites = registration_counters(data["registrations"])
@@ -619,7 +630,7 @@ def run_use_comparison(plan, c):
     if len(rows) > 8:
         warnings.append("Seules 8 lignes de comparaison sont détaillées en faits ; le tableau comparison.rows est complet.")
     return Result(typed={"comparison": data}, coverage=data.get("coverage") or [], warnings=warnings,
-                  counters=counters, extra={"cites": cites, "countries": countries})
+                  counters=counters, extra={"cites": cites, "countries": countries, "level": level, "level_note": level_note})
 
 
 def run_ingredient_search(plan, c):
@@ -793,7 +804,7 @@ def template_text(plan, r, c):
         rows, differ = r.counters.get("rows", 0), r.counters.get("rowsDiffering", 0)
         if rows:
             sentences.append(f"Comparaison de {plan.product_name} entre {', '.join(r.extra['countries'])} : "
-                             f"{plural(rows, 'ligne culture × cible', 'lignes culture × cible')}, dont {r.counters['rowsComparable']} avec une valeur "
+                             f"{plural(rows, 'ligne culture × cible', 'lignes culture × cible') if r.extra.get('level') != 'crop' else plural(rows, 'culture', 'cultures')}, dont {r.counters['rowsComparable']} avec une valeur "
                              f"dans au moins deux pays et {differ} avec des différences "
                              f"{cite([i for ids in r.extra['cites'].values() for i in ids][:3])}.")
             sentences.append("Les valeurs restent séparées par pays dans le tableau.")
@@ -1090,6 +1101,9 @@ def ask(body):
     text, check_warnings, blocked = verify_text(text, c.facts, context, r.coverage, plan.intent,
                                                 require_citation=written_by_llm)
     warnings += check_warnings
+    note = r.extra.get("level_note")   # bascule automatique au niveau culture : toujours dite, ajoutée après les contrôles
+    if note:
+        text = f"{note} {text}"
 
     if not (c.facts or r.has_data()):
         status = "no_data"

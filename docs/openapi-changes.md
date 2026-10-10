@@ -209,3 +209,10 @@ Provider and model come from `AI_BASE_URL` / `AI_MODEL` and are echoed in `gener
 ## Power Platform, submission script, open points
 
 See the French sections above: the 4-step connector import (tunnel on port 8080, set `host`, import, add the `askRegulatoryQuestion` action), the snake_case conversion script for `evaluate_submission.py`, and open points (`CLAUDE.md` still names the old contract, `/export` vs `/compare?format=csv`, `intent` vs `answerType`).
+
+## Added outside the contract: `granularity` on `/compare` (for Damien to report)
+
+- Query parameter `granularity` = `use` (default, one row per crop × target, unchanged) | `crop` (one row per normalized crop).
+- Response: top-level `granularity`; in `crop` mode `rows[].targetNormalized` / `eppoTargetCode` are `null` and each present cell has `summary`: `{useCount, targetsOriginal[], doses[{unitOriginal, min, max}]}`. Doses are per ORIGINAL unit, never converted or mixed. "Authorized yes/no" = `state` (`present` or not).
+- When `use` level has no row with values in 2+ countries but a crop exists in 2 countries, `warnings` suggests `granularity=crop`.
+- `/ask` (`use_comparison`) switches to crop level automatically in that case and says so in the first sentence.

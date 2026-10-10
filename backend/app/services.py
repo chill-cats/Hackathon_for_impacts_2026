@@ -736,21 +736,42 @@ def row_key(use, lookup=None):
     (insensible à la casse), SINON valeur originale. alignedBy = la méthode la plus faible des deux parties
     (eppo > normalized_name > original)."""
     lookup = lookup or {}
-
-    def part(kind, code, normalized, original):
-        if code:
-            return code, "eppo"
-        if normalized:
-            name = normalized.strip().lower()
-            return (lookup[(kind, name)], "eppo") if (kind, name) in lookup else (name, "normalized_name")
-        if original:
-            return original.strip().lower(), "original"
-        return "", None   # partie absente : ne compte pas dans alignedBy
-    c, ck = part("crop", use["eppoCropCode"], use["cropNormalized"], use["cropOriginal"])
-    t, tk = part("target", use["eppoTargetCode"], use["targetNormalized"], use["targetOriginal"])
+    c, ck = key_part("crop", use["eppoCropCode"], use["cropNormalized"], use["cropOriginal"], lookup)
+    t, tk = key_part("target", use["eppoTargetCode"], use["targetNormalized"], use["targetOriginal"], lookup)
     order = ["eppo", "normalized_name", "original"]
     weakest = max((k for k in (ck, tk) if k), key=order.index, default="original")
     return f"{ck}:{c}|{tk}:{t}", weakest
+
+
+def key_part(kind, code, normalized, original, lookup):
+    """(valeur, méthode) d'une partie (culture ou cible) : code EPPO, sinon nom normalisé, sinon valeur originale."""
+    if code:
+        return code, "eppo"
+    if normalized:
+        name = normalized.strip().lower()
+        return (lookup[(kind, name)], "eppo") if (kind, name) in lookup else (name, "normalized_name")
+    if original:
+        return original.strip().lower(), "original"
+    return "", None   # partie absente : ne compte pas dans alignedBy
+
+
+def crop_key(use, lookup=None):
+    """(clé, alignedBy) au niveau culture seulement : la cible est ignorée, deux cultures différentes ne sont jamais fusionnées."""
+    c, ck = key_part("crop", use["eppoCropCode"], use["cropNormalized"], use["cropOriginal"], lookup or {})
+    return f"{ck}:{c}", ck or "original"
+
+
+def crop_cell_summary(uses):
+    """Résumé d'une cellule (pays × culture) : nombre d'usages, cibles ORIGINALES, doses min-max PAR unité originale.
+    Les unités ne sont jamais converties : une unité = une ligne de dose."""
+    targets = sorted({u["targetOriginal"] for u in uses if u["targetOriginal"]})
+    by_unit = {}
+    for u in uses:
+        if u["doseValue"] is not None:
+            by_unit.setdefault(u["doseUnitOriginal"], []).append(float(u["doseValue"]))
+    doses = [{"unitOriginal": unit, "min": min(vals), "max": max(vals)}
+             for unit, vals in sorted(by_unit.items(), key=lambda kv: kv[0] or "")]
+    return {"useCount": len(uses), "targetsOriginal": targets, "doses": doses}
 
 
 def term_groups(use_ids):
@@ -767,8 +788,12 @@ def term_groups(use_ids):
             for r in rows if r["excerpt"] and r["excerpt"].startswith("group_en=")}
 
 
-def compare_uses(product_id, countries, crop, target, include_synthetic, limit, offset):
-    """GET /compare : lignes alignées par EPPO, une cellule par pays, jamais de mélange entre pays."""
+def compare_uses(product_id, countries, crop, target, include_synthetic, limit, offset, granularity="use"):
+    """GET /compare : lignes alignées par EPPO, une cellule par pays, jamais de mélange entre pays.
+
+    granularity="use" : une ligne par culture × cible. "crop" : une ligne par culture (la cible est ignorée pour
+    l'alignement mais reste visible dans summary.targetsOriginal) ; utile quand un pays ne précise pas la cible."""
+    by_crop = granularity == "crop"
     ref, rows = load_reference(product_id)
     profile = build_profile(ref, rows)
     matched, truncated = match_registrations(ref, profile, countries, include_synthetic)
@@ -788,13 +813,16 @@ def compare_uses(product_id, countries, crop, target, include_synthetic, limit, 
     for rid, use_list in uses.items():
         cc = regs_by_id[rid]["country_code"]
         for use in use_list:
-            key, aligned_by = row_key(use, lookup)
+            key, aligned_by = (crop_key if by_crop else row_key)(use, lookup)
             row = rows.setdefault(key, {
                 "alignedBy": aligned_by,
                 "cropNormalized": use["cropNormalized"], "eppoCropCode": use["eppoCropCode"],
-                "targetNormalized": use["targetNormalized"], "eppoTargetCode": use["eppoTargetCode"],
+                "targetNormalized": None if by_crop else use["targetNormalized"],
+                "eppoTargetCode": None if by_crop else use["eppoTargetCode"],
                 "cropGroup": None, "targetGroup": None, "by_country": {}})
             for key, field in (("cropGroup", "crop_group"), ("targetGroup", "target_group")):
+                if by_crop and field == "target_group":
+                    continue   # plusieurs cibles par ligne : un groupe de cibles n'aurait pas de sens
                 row[key] = row[key] or groups.get((use["useId"], field))
             row["by_country"].setdefault(cc, {"registrationId": rid, "uses": []})["uses"].append(use)
 
@@ -804,6 +832,8 @@ def compare_uses(product_id, countries, crop, target, include_synthetic, limit, 
         for cc in countries:
             if cc in row["by_country"]:
                 cell = {"countryCode": cc, "state": "present", **row["by_country"][cc]}
+                if by_crop:
+                    cell["summary"] = crop_cell_summary(cell["uses"])
                 doses[cc] = sorted({(u["doseValue"], u["doseUnitNormalized"]) for u in cell["uses"]},
                                    key=lambda d: (d[0] is None, d[0] or 0, d[1] or ""))
             elif cc in found:
@@ -821,6 +851,17 @@ def compare_uses(product_id, countries, crop, target, include_synthetic, limit, 
             "cropGroup": row["cropGroup"], "targetGroup": row["targetGroup"],
             "alignedBy": row["alignedBy"], "differsAcrossCountries": doses_differ, "cells": cells})
 
+    if not by_crop and len(countries) >= 2 and not any(sum(c["state"] == "present" for c in r["cells"]) >= 2 for r in out_rows):
+        # Aucune ligne culture × cible commune : si une même culture existe dans 2 pays, proposer le niveau culture
+        crops_by_country = {}
+        for rid, use_list in uses.items():
+            for use in use_list:
+                crops_by_country.setdefault(regs_by_id[rid]["country_code"], set()).add(crop_key(use, lookup)[0])
+        sets = list(crops_by_country.values())
+        if any(a & b for i, a in enumerate(sets) for b in sets[i + 1:]):
+            uses_warnings.append("Aucune ligne culture × cible n'est comparable entre ces pays : essayez granularity=crop "
+                                 "(comparaison au niveau de la culture).")
+
     # registrations[] : 50 usages au plus par homologation (le détail complet est dans rows[].cells[].uses)
     registrations = [registration_dict(r, uses.get(r["registration_id"], [])[:50]) for r in matched[:300]]
     warnings = coverage_warnings(coverage)
@@ -832,7 +873,7 @@ def compare_uses(product_id, countries, crop, target, include_synthetic, limit, 
         warnings.append("Résultat tronqué (trop d'homologations) : ajoutez un filtre crop/target.")
     return {"productId": product_id, "countries": countries, "registrations": registrations,
             "rows": out_rows[offset:offset + limit], "coverage": coverage, "warnings": warnings,
-            "disclaimer": DISCLAIMER}
+            "granularity": granularity, "disclaimer": DISCLAIMER}
 
 
 CSV_COLUMNS = ["productId", "countryCode", "coverageOutcome", "registrationId", "registrationNumber",

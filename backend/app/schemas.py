@@ -9,7 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from .models import (Answer, AnswerGenerator, ComparisonResponse, ComparisonRow, CountryCoverage, MatchedVia, Product,
+from .models import (Answer, AnswerGenerator, ComparisonCell, ComparisonResponse, ComparisonRow, CountryCoverage, MatchedVia, Product,
                      Registration, SourceInfo)
 
 
@@ -23,17 +23,36 @@ class ProductOut(Product):
     matchedVia: MatchedVia | None = None
 
 
+class CropDose(BaseModel):
+    unitOriginal: str | None = None   # unité telle que publiée par la source, jamais convertie
+    min: float
+    max: float
+
+
+class CropCellSummary(BaseModel):
+    useCount: int
+    targetsOriginal: list[str]
+    doses: list[CropDose]
+
+
+class ComparisonCellOut(ComparisonCell):
+    """ComparisonCell du contrat + `summary` (AJOUT optionnel, seulement avec granularity=crop)."""
+    summary: CropCellSummary | None = None
+
+
 class ComparisonRowOut(ComparisonRow):
     """ComparisonRow du contrat + `cropGroup` / `targetGroup` (AJOUT optionnel : catégorie large suggérée par l'IA,
     ex. "Powdery mildews", "Cereals", à vérifier) + `alignedBy` (clé d'alignement). Propose d'ajouter ces champs au contrat."""
     cropGroup: str | None = None
     targetGroup: str | None = None
     alignedBy: Literal["eppo", "normalized_name", "original"] | None = None   # clé d'alignement de la ligne (hors contrat)
+    cells: list[ComparisonCellOut]
 
 
 class ComparisonResponseOut(ComparisonResponse):
     """ComparisonResponse du contrat, avec des lignes enrichies de cropGroup / targetGroup."""
     rows: list[ComparisonRowOut] | None = None
+    granularity: Literal["use", "crop"] | None = None   # niveau de comparaison (hors contrat)
 
 
 class ProductsResponse(BaseModel):

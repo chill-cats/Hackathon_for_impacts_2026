@@ -173,6 +173,7 @@ def compareProductUses(
         countries: str = Query(..., description="Comma-separated ISO 3166-1 alpha-2 codes.", examples=["CA,US,BR"]),
         crop: str | None = Query(None, description="Optional crop filter, EPPO code or name."),
         target: str | None = Query(None, description="Optional pest or disease filter, EPPO code or name."),
+        granularity: Literal["use", "crop"] = Query("use", description="use = one row per crop x target (default); crop = one row per normalized crop (per country: use count, original targets, min-max doses per ORIGINAL unit). Added outside the contract."),
         format: Literal["json", "csv"] = Query("json", description="csv returns one line per country x use with evidence columns."),
         includeSynthetic: bool = Query(False), limit: int = Query(200, ge=1, le=1000), offset: int = Query(0, ge=0)):
     codes = []
@@ -186,7 +187,7 @@ def compareProductUses(
             codes.append(code)
     if not codes:
         raise ApiError(422, "invalid_request", "At least one country code is required.")
-    data = services.compare_uses(productId, codes, crop, target, includeSynthetic, limit, offset)
+    data = services.compare_uses(productId, codes, crop, target, includeSynthetic, limit, offset, granularity)
     if format == "csv":
         return Response(content=services.comparison_csv(data), media_type="text/csv",
                         headers={"Content-Disposition": f'attachment; filename="compare-{productId}.csv"'})
