@@ -1,12 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { HlmButtonImports } from '@spartan-ng/helm/button';
 
 @Component({
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, HlmButtonImports],
   selector: 'app-root',
-  styleUrl: './app.scss',
   templateUrl: './app.html',
 })
 export class App {
-  protected readonly title = signal('frontend');
+  protected readonly title = signal('Hackathon Lallemand');
+  protected readonly clicks = signal(0);
 }
