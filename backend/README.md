@@ -48,3 +48,10 @@ datamodel-codegen --input openapi.proposed.yaml --input-file-type openapi `
 ```powershell
 pytest tests/test_api.py -q      # interroge la vraie base en lecture seule (ignoré sans DATABASE_URL)
 ```
+
+## Lancer les adaptateurs France et Allemagne
+
+Voir le [guide de lancement des adaptateurs](etl/adapters/README.md) : configuration
+PostgreSQL, démarrage Docker, exécution Python locale, exports CSV et dépannage.
+Chaque pays dispose de son propre fichier Compose dans `backend/etl/adapters/france/`
+ou `backend/etl/adapters/germany/`.

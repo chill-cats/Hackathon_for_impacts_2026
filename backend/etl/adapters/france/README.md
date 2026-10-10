@@ -1,5 +1,8 @@
 # France scheduled ingestion service
 
+For setup, Docker startup, local Python, CSV export and troubleshooting,
+see the [shared run guide](../README.md).
+
 `main.py` runs continuously. With no prior successful run it imports immediately,
 then refreshes every seven days (604800 seconds). E-Phy exports, raw snapshots,
 CSV evidence and validation reports are retained in a persistent Docker volume.
@@ -8,7 +11,7 @@ restarts. A changed interval takes effect after restarting the service.
 
 ## One-time deployment
 
-Run the commands below from `adapters/france/` (relative to the repository root).
+Run the commands below from `backend/etl/adapters/france/` (relative to the repository root).
 
 Create `.env` from `.env.example`, set `DATABASE_URL`, then:
 

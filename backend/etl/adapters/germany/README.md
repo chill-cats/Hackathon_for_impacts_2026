@@ -1,12 +1,15 @@
 # Germany scheduled ingestion service
 
+For setup, Docker startup, local Python, CSV export and troubleshooting,
+see the [shared run guide](../README.md).
+
 `main.py` matches the France adapter’s Docker/command-line interface. With no prior successful run it imports immediately, then refreshes every seven days (604800 seconds). Run history in the existing public flat database determines the next due time across restarts. A changed interval takes effect after restarting the service.
 
 The CSV exporter remains available through `exporter.py` and uses the Python 3.10+ standard library. The scheduled service additionally uses the pinned PostgreSQL driver in `requirements.txt`.
 
 ## One-time deployment
 
-Run the commands below from `adapters/germany/` (relative to the repository root).
+Run the commands below from `backend/etl/adapters/germany/` (relative to the repository root).
 
 Create `.env` from `.env.example`, set `DATABASE_URL` to the same public flat database used by France, then:
 
