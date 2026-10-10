@@ -21,6 +21,9 @@ RUN node scripts/generate-env.mjs && pnpm exec ng build
 
 # --- Étape 2 : serveur nginx -------------------------------------------------
 FROM nginx:alpine
+# Valeur par défaut vide : sans elle, nginx lirait ${API_KEY} comme une variable inconnue et ne démarrerait pas.
+# En Docker Compose, le .env racine (env_file) la remplace.
+ENV API_KEY=""
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 # Les fichiers de /etc/nginx/templates sont passés à envsubst au démarrage
 COPY docker/default.conf.template /etc/nginx/templates/default.conf.template

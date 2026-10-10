@@ -4,10 +4,14 @@
   "scripts": {
     "ng": "ng",
     "env": "node scripts/generate-env.mjs",
-    "start": "node scripts/generate-env.mjs && ng serve",
+    "mock": "prism mock -p 4010 ../openapi.proposed.yaml",
+    "start": "node scripts/generate-env.mjs && ng serve --proxy-config proxy.back.mjs",
+    "start:mock": "concurrently -k -n prism,app -c cyan,green \"pnpm mock\" \"node scripts/generate-env.mjs --mock && ng serve --proxy-config proxy.mock.mjs\"",
     "build": "node scripts/generate-env.mjs && ng build",
     "watch": "node scripts/generate-env.mjs && ng build --watch --configuration development",
-    "test": "node scripts/generate-env.mjs && ng test"
+    "test": "node scripts/generate-env.mjs && node scripts/build-mocks.mjs && ng test --no-watch",
+    "gen:api": "openapi-typescript ../openapi.proposed.yaml -o src/app/core/api/schema.d.ts",
+    "gen:mocks": "node scripts/build-mocks.mjs"
   },
   "private": true,
   "packageManager": "pnpm@10.30.3",
@@ -37,9 +41,13 @@
     "@angular/cli": "^22.2.2",
     "@angular/compiler-cli": "^22.2.0",
     "@spartan-ng/cli": "^1.6.3",
+    "@stoplight/prism-cli": "5.14.2",
+    "concurrently": "^10.0.6",
     "jsdom": "^30.0.0",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "yaml": "^2.9.1"
   }
 }
