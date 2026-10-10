@@ -111,7 +111,7 @@ Le back n'existe pas encore. Avant tout le reste, l'app doit tourner entièremen
    - vers le back : garder `/api` et ajouter la clé lue dans le `.env`.
 4. Un indicateur « mode mock » dans `environment.ts` (fichier généré : ajouter une variable `FRONT_MOCK` lue par `scripts/generate-env.mjs`), et un bandeau discret « Mock : données fictives » visible tant qu'il est actif.
 5. Le choix de l'exemple, en mode mock uniquement : chaque appel porte l'en-tête `Prefer: example=<nom>`.
-   - Pour `/ask`, le nom est l'`intent` de la question cliquée : les exemples de l'accueil et les questions suggérées portent tous leur `intent`. Pour une question tapée librement, une correspondance par mots-clés réservée au mock (comparer → `use_comparison`, incertain ou manquant → `data_quality`, sœur → `sister_product`, source → `source_lookup`, expire → `expiry_watch`, souche ou culture → `ingredient_search`), sinon `registration_lookup`. Un choix dans `clarificationOptions` relance avec `registration_lookup`.
+   - Pour `/ask`, le nom est l'`intent` de la question cliquée : les exemples de l'accueil et les questions suggérées portent tous leur `intent`. Pour une question tapée librement, une correspondance par mots-clés réservée au mock (comparer → `use_comparison`, incertain ou manquant → `data_quality`, sœur → `sister_product`, source → `source_lookup`, expire → `expiry_watch`, souche, culture, « contre » ou « quel(s) produit(s) » → `ingredient_search`), sinon `registration_lookup`. Un choix dans `clarificationOptions` relance avec `registration_lookup`.
    - Pour `GET /products`, `ingredient_search` quand un filtre substance, culture ou cible est présent, sinon l'exemple par défaut.
    - Hors mode mock, l'en-tête n'est jamais envoyé.
 

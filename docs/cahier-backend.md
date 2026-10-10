@@ -31,7 +31,7 @@ Une seule API sert deux clients : le front Angular et un agent Copilot Studio (M
 |---|---|---|
 | `registration_lookup` | Dans quels pays le produit X est-il homologué ? | Une ligne par pays cible : trouvé (statut, numéro, dates, source), cherché sans résultat, source indisponible ou pays non couvert. |
 | `use_comparison` | Comparer les usages de X entre deux pays | Un tableau culture × cible aligné par code EPPO, une colonne par pays, doses et restrictions, jamais de valeur fusionnée. |
-| `ingredient_search` | Quels produits avec le microorganisme X sur la tomate ? | Les produits (LPC et concurrents) avec leurs homologations correspondantes. |
+| `ingredient_search` | Quels produits avec le microorganisme X sur la tomate ? Quel produit contre l'oïdium ? | Les produits (LPC et concurrents) avec leurs homologations correspondantes, cherchés par substance, culture ou cible. |
 | `expiry_watch` | Quelles autorisations expirent dans les 12 prochains mois ? | Liste triée par date d'expiration, avec jours restants et source. |
 | `data_quality` | Quels champs sont manquants ou incertains pour X ? | Une file de travail priorisée : champ, problème, confiance IA, statut de validation, preuve. |
 | `sister_product` | Quels produits pourraient être des produits sœurs de X ? | Des hypothèses avec ce qui les rapproche, score de confiance et statut de revue. Jamais présentées comme des faits. |
@@ -166,6 +166,7 @@ sources officielles → ingesteurs (équipe) → normalize.py / load_db.py → P
 - **Les ids de `field_evidence` changent** si la base est réinitialisée (`reset_DANGER.sql`).
 - **`v_comparison` n'a pas toutes les colonnes d'usage** (unité normalisée, DAR, méthode…). Lire les tables directement si besoin.
 - **D'autres coéquipiers écrivent en parallèle** dans la base : ne jamais figer des compteurs ou des listes en dur.
+- **Un mot courant peut couvrir plusieurs cibles.** « Oïdium » désigne plusieurs champignons (vigne : *Erysiphe necator*, cucurbitacées : *Podosphaera xanthii*…). Dans `data/eppo_pest_mapping.csv`, le mot seul « oïdium » n'est rattaché qu'à *Golovinomyces orontii*. Filtrer sur ce seul code EPPO raterait la vigne : chercher aussi dans les cibles d'origine (texte) et prendre tous les concepts dont un nom ou un alias contient le mot.
 
 ## 6. Routes à coder
 
@@ -223,6 +224,11 @@ Exigences :
 - **`evidenceId`** : construit depuis les clés existantes (`registration:…`, `use:…`, `field:…`), stable d'un appel à l'autre.
 - **`cropMappingStatus` / `targetMappingStatus`** : statut de la table EPPO pour le code ; `unmapped` si pas de code.
 - **`daysUntilExpiration`** : jours entre `referenceDate` (aujourd'hui par défaut) et la date d'expiration.
+- **Recherche sans produit nommé** (« quel produit utiliser contre l'oïdium ? » → `ingredient_search`) :
+  - l'application ne recommande jamais : elle liste ce qui est homologué, avec l'alerte « Homologué ne veut pas dire recommandé : le choix relève d'un conseiller » ;
+  - sans pays ni culture, ne pas bloquer en `needs_clarification` : répondre groupé par pays puis par culture, produits LPC d'abord ;
+  - si aucun produit LPC ne correspond, le dire en première phrase (c'est le cas de l'oïdium pour CONTANS, G46 et M52) ;
+  - au plus 20 lignes dans `/ask`, le total réel dans le texte de la réponse, et des `suggestedQuestions` pour préciser la culture et le pays. La liste complète passe par `GET /products?target=…`.
 
 ## 9. Configuration et sécurité
 

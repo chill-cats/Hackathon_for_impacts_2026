@@ -19,7 +19,8 @@ server {
     proxy_set_header X-Forwarded-Proto $scheme;
     # Clé d'API ajoutée ICI, côté serveur : elle n'est jamais envoyée au navigateur.
     # Une valeur vide (API_KEY non renseignée) = nginx n'envoie pas l'en-tête.
-    proxy_set_header X-API-Key ${API_KEY};
+    # Les guillemets sont indispensables : sans eux, une clé vide donne « proxy_set_header X-API-Key ; » et nginx ne démarre pas.
+    proxy_set_header X-API-Key "${API_KEY}";
   }
 
   # Angular = SPA : toute URL inconnue renvoie index.html (le routeur prend le relais)
