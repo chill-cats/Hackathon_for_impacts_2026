@@ -111,7 +111,14 @@ docker compose up -d --build  # front sur http://localhost:8080
 cd frontend && pnpm install && pnpm start   # http://localhost:4200
 ```
 
-Quand le back existera : `docker compose --profile backend up -d --build`.
+Back + front : `docker compose --profile backend up -d --build` (la base est le PostgreSQL d'équipe, `DATABASE_URL` du `.env`).
+
+### Base PostgreSQL locale (optionnelle, installation autonome)
+
+Sans accès au serveur d'équipe : `docker compose --profile localdb up -d postgres` crée une base vide
+(PostgreSQL 16, `db/schema.sql` exécuté une seule fois à la création du volume `pg_data`). Ensuite, dans `.env` :
+`DATABASE_URL=postgresql+psycopg://lallemand:lallemand@localhost:5432/lallemand`, puis recharger les données
+(`python backend/etl/load_db.py --no-test`, adaptateurs, `--normalize-db`). Ne jamais lancer ce profil pour remplacer la base d'équipe.
 
 ## Variables d'environnement
 

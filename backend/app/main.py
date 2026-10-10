@@ -13,6 +13,7 @@ Documentation interactive : http://localhost:3000/docs
 import hmac
 import os
 import unicodedata
+from contextlib import asynccontextmanager
 from datetime import date
 from typing import Literal
 
@@ -26,12 +27,22 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import db  # noqa: F401  (charge le fichier .env)
 from . import agent
+from . import opportunities as opp
 from . import models as m
 from . import schemas as s
 from . import services
+from . import warmup
 from .services import DISCLAIMER, NO_MATCH, NotFound
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Au démarrage : préchauffe en arrière-plan les requêtes de démo (voir warmup.py ; WARMUP=0 pour désactiver)."""
+    warmup.start(_app)
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="LPC Global Regulatory AI API",
     version="0.2.1",
     description="Contrat : openapi.proposed.yaml. Pas une source réglementaire officielle : "
@@ -165,7 +176,7 @@ def getSisterCandidates(productId: str, includeSynthetic: bool = Query(False)):
     return services.sister_candidates(productId, includeSynthetic)
 
 
-@secured.get("/compare", tags=["comparison"], response_model=m.ComparisonResponse, response_model_exclude_unset=True,
+@secured.get("/compare", tags=["comparison"], response_model=s.ComparisonResponseOut, response_model_exclude_unset=True,
              responses={200: {"content": {"text/csv": {}}}, 401: PROBLEM, 404: PROBLEM},
              summary="Compare authorized uses across countries")
 def compareProductUses(
@@ -173,6 +184,7 @@ def compareProductUses(
         countries: str = Query(..., description="Comma-separated ISO 3166-1 alpha-2 codes.", examples=["CA,US,BR"]),
         crop: str | None = Query(None, description="Optional crop filter, EPPO code or name."),
         target: str | None = Query(None, description="Optional pest or disease filter, EPPO code or name."),
+        granularity: Literal["use", "crop"] = Query("use", description="use = one row per crop x target (default); crop = one row per normalized crop (per country: use count, original targets, min-max doses per ORIGINAL unit). Added outside the contract."),
         format: Literal["json", "csv"] = Query("json", description="csv returns one line per country x use with evidence columns."),
         includeSynthetic: bool = Query(False), limit: int = Query(200, ge=1, le=1000), offset: int = Query(0, ge=0)):
     codes = []
@@ -186,7 +198,7 @@ def compareProductUses(
             codes.append(code)
     if not codes:
         raise ApiError(422, "invalid_request", "At least one country code is required.")
-    data = services.compare_uses(productId, codes, crop, target, includeSynthetic, limit, offset)
+    data = services.compare_uses(productId, codes, crop, target, includeSynthetic, limit, offset, granularity)
     if format == "csv":
         return Response(content=services.comparison_csv(data), media_type="text/csv",
                         headers={"Content-Disposition": f'attachment; filename="compare-{productId}.csv"'})
@@ -211,6 +223,21 @@ def listExpirations(
         crop: str | None = Query(None, description="Only registrations with a use on this crop (EPPO code or name)."),
         includeSynthetic: bool = Query(False), limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
     return services.expirations(withinMonths, referenceDate, country, crop, includeSynthetic, limit, offset)
+
+
+@secured.get("/opportunities", tags=["market"], response_model=s.OpportunitiesResponse, response_model_exclude_unset=True,
+             responses={401: PROBLEM, 404: PROBLEM},
+             summary="Free spaces for biocontrol: crop x target pairs with many active chemical uses and few biological ones (outside the contract)")
+def listOpportunities(
+        country: str | None = COUNTRY,
+        crop: str | None = Query(None, description="Crop, EPPO code or name in any language."),
+        target: str | None = Query(None, description="Pest or disease, EPPO code or name in any language."),
+        productId: str | None = Query(None, description="Only crop x target pairs where the substance of this LPC product already has an active use in some country."),
+        minChemicalUses: int = Query(5, ge=1, le=1000, description="Minimum number of active chemical uses for a pair to be listed."),
+        lpcOnly: bool = Query(False, description="Only pairs where an LPC product, a sister candidate or a product with the same substance is already authorized."),
+        limit: int = Query(20, ge=1, le=100)):
+    """Aide à l'analyse, pas une décision réglementaire. Hors contrat (voir docs/openapi-changes.md)."""
+    return opp.opportunities(country, crop, target, limit, productId, minChemicalUses, lpcOnly)
 
 
 @secured.get("/sources", tags=["sources"], response_model=s.SourcesResponse, response_model_exclude_unset=True,

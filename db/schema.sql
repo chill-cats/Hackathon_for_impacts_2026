@@ -1,20 +1,14 @@
 -- LPC Global Regulatory AI - PostgreSQL schema
 -- Built from data/field_dictionary.csv and the CSV headers in data/.
 -- Column names match the CSVs exactly, so each file loads with a plain COPY.
--- Safe to re-run: drops and recreates everything.
-
-DROP VIEW  IF EXISTS v_comparison;
-DROP TABLE IF EXISTS field_evidence, collection_runs,
-                     uses, registrations, product_aliases,
-                     product_name_mapping, active_entity_mapping,
-                     eppo_crop_mapping, eppo_pest_mapping,
-                     products, source_registry CASCADE;
+-- Safe to re-run: creates only what is missing, never deletes data.
+-- (The destructive reset lives in db/reset_DANGER.sql only.)
 
 -- =====================================================================
 -- 1. Canonical data (filled by the ingestors)
 -- =====================================================================
 
-CREATE TABLE source_registry (
+CREATE TABLE IF NOT EXISTS source_registry (
     source_id                  TEXT PRIMARY KEY,
     official_name              TEXT NOT NULL,
     country_or_region          TEXT NOT NULL,
@@ -28,7 +22,7 @@ CREATE TABLE source_registry (
     CHECK (base_url IS NULL OR base_url ~ '^https?://')
 );
 
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
     product_id               TEXT PRIMARY KEY,       -- stable ID, never the commercial name
     commercial_name          TEXT NOT NULL,
     active_entity_original   TEXT,                   -- exact source wording, never modified
@@ -39,7 +33,7 @@ CREATE TABLE products (
         ('automatically_extracted','to_verify','validated','rejected','obsolete','source_unavailable'))
 );
 
-CREATE TABLE product_aliases (
+CREATE TABLE IF NOT EXISTS product_aliases (
     alias_id          TEXT PRIMARY KEY,
     product_id        TEXT NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,   -- the pilot product
     related_product_id TEXT REFERENCES products(product_id) ON DELETE CASCADE,          -- the exact product this alias describes
@@ -53,7 +47,7 @@ CREATE TABLE product_aliases (
     is_synthetic      BOOLEAN NOT NULL
 );
 
-CREATE TABLE registrations (
+CREATE TABLE IF NOT EXISTS registrations (
     registration_id     TEXT PRIMARY KEY,
     product_id          TEXT NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
     country_code        CHAR(2) NOT NULL CHECK (country_code ~ '^[A-Z]{2}$'),
@@ -73,7 +67,7 @@ CREATE TABLE registrations (
     is_synthetic        BOOLEAN NOT NULL
 );
 
-CREATE TABLE uses (
+CREATE TABLE IF NOT EXISTS uses (
     use_id                    TEXT PRIMARY KEY,
     registration_id           TEXT NOT NULL REFERENCES registrations(registration_id) ON DELETE CASCADE,
     crop_name_original        TEXT,
@@ -100,7 +94,7 @@ CREATE TABLE uses (
 -- 2. Reference / lookup data (LPC mappings, used for normalization)
 -- =====================================================================
 
-CREATE TABLE product_name_mapping (
+CREATE TABLE IF NOT EXISTS product_name_mapping (
     mapping_id        TEXT PRIMARY KEY,
     product_id        TEXT NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
     name_variant      TEXT NOT NULL,
@@ -113,7 +107,7 @@ CREATE TABLE product_name_mapping (
     review_status     TEXT NOT NULL
 );
 
-CREATE TABLE active_entity_mapping (
+CREATE TABLE IF NOT EXISTS active_entity_mapping (
     mapping_id        TEXT PRIMARY KEY,
     product_id        TEXT NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
     entity_type       TEXT NOT NULL,
@@ -128,7 +122,7 @@ CREATE TABLE active_entity_mapping (
     review_status     TEXT NOT NULL
 );
 
-CREATE TABLE eppo_crop_mapping (
+CREATE TABLE IF NOT EXISTS eppo_crop_mapping (
     concept_id           TEXT PRIMARY KEY,
     language             TEXT,
     name_original        TEXT,
@@ -141,14 +135,14 @@ CREATE TABLE eppo_crop_mapping (
     multilingual_aliases TEXT             -- 'fr:tomate|es:tomate|...'
 );
 
-CREATE TABLE eppo_pest_mapping (LIKE eppo_crop_mapping INCLUDING ALL);
+CREATE TABLE IF NOT EXISTS eppo_pest_mapping (LIKE eppo_crop_mapping INCLUDING ALL);
 
 -- =====================================================================
 -- 3. Team extensions (allowed by the README; no traceability field removed)
 -- =====================================================================
 
 -- One row per ingestor run: enables change detection between two runs (bonus).
-CREATE TABLE collection_runs (
+CREATE TABLE IF NOT EXISTS collection_runs (
     run_id       BIGSERIAL PRIMARY KEY,
     source_id    TEXT NOT NULL REFERENCES source_registry(source_id),
     started_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -161,7 +155,7 @@ CREATE TABLE collection_runs (
 );
 
 -- One row per extracted value (mainly label PDFs): evidence at field level.
-CREATE TABLE field_evidence (
+CREATE TABLE IF NOT EXISTS field_evidence (
     evidence_id       BIGSERIAL PRIMARY KEY,
     entity_type       TEXT NOT NULL CHECK (entity_type IN ('product','registration','use')),
     entity_id         TEXT NOT NULL,      -- product_id / registration_id / use_id
@@ -182,25 +176,25 @@ CREATE TABLE field_evidence (
 -- 4. Indexes for the API queries
 -- =====================================================================
 
-CREATE INDEX idx_products_name        ON products (lower(commercial_name));
-CREATE INDEX idx_products_entity      ON products (lower(active_entity_normalized));
-CREATE INDEX idx_aliases_name         ON product_aliases (lower(alias_name));
-CREATE INDEX idx_aliases_product      ON product_aliases (product_id);
-CREATE INDEX idx_aliases_related      ON product_aliases (related_product_id);
-CREATE INDEX idx_reg_product          ON registrations (product_id);
-CREATE INDEX idx_reg_country          ON registrations (country_code);
-CREATE INDEX idx_reg_expiration       ON registrations (expiration_date);
-CREATE INDEX idx_uses_registration    ON uses (registration_id);
-CREATE INDEX idx_uses_crop            ON uses (eppo_crop_code);
-CREATE INDEX idx_uses_target          ON uses (eppo_target_code);
-CREATE INDEX idx_entity_variant       ON active_entity_mapping (lower(name_variant));
-CREATE INDEX idx_evidence_entity      ON field_evidence (entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_products_name        ON products (lower(commercial_name));
+CREATE INDEX IF NOT EXISTS idx_products_entity      ON products (lower(active_entity_normalized));
+CREATE INDEX IF NOT EXISTS idx_aliases_name         ON product_aliases (lower(alias_name));
+CREATE INDEX IF NOT EXISTS idx_aliases_product      ON product_aliases (product_id);
+CREATE INDEX IF NOT EXISTS idx_aliases_related      ON product_aliases (related_product_id);
+CREATE INDEX IF NOT EXISTS idx_reg_product          ON registrations (product_id);
+CREATE INDEX IF NOT EXISTS idx_reg_country          ON registrations (country_code);
+CREATE INDEX IF NOT EXISTS idx_reg_expiration       ON registrations (expiration_date);
+CREATE INDEX IF NOT EXISTS idx_uses_registration    ON uses (registration_id);
+CREATE INDEX IF NOT EXISTS idx_uses_crop            ON uses (eppo_crop_code);
+CREATE INDEX IF NOT EXISTS idx_uses_target          ON uses (eppo_target_code);
+CREATE INDEX IF NOT EXISTS idx_entity_variant       ON active_entity_mapping (lower(name_variant));
+CREATE INDEX IF NOT EXISTS idx_evidence_entity      ON field_evidence (entity_type, entity_id);
 
 -- =====================================================================
 -- 5. Product x country x use view (the comparison table the brief asks for)
 -- =====================================================================
 
-CREATE VIEW v_comparison AS
+CREATE OR REPLACE VIEW v_comparison AS
 SELECT p.product_id, p.commercial_name, p.active_entity_normalized,
        r.country_code, r.registration_number, r.status_original, r.status_normalized,
        r.expiration_date,

@@ -53,6 +53,10 @@ def test_search_prestop_finds_france_and_canada(client):
 
 
 def test_synthetic_data_hidden_unless_requested(client):
+    from backend.app.db import query
+    # Ce test s'appuie sur les produits fictifs P-TEST-* : sans eux en base (rechargé avec --no-test), on ignore.
+    if not query("SELECT 1 FROM products WHERE is_synthetic AND commercial_name ILIKE '%TEST%' LIMIT 1"):
+        pytest.skip("aucun produit fictif TEST en base : rien à masquer")
     default = client.get("/api/products", params={"q": "TEST"}).json()["items"]
     assert not any(i["isSynthetic"] for i in default)
     shown = client.get("/api/products", params={"q": "TEST GLIOCLADIUM", "includeSynthetic": "true"}).json()["items"]
@@ -116,3 +120,30 @@ def test_api_key_required_only_when_configured(client, monkeypatch):
     assert client.get("/api/sources").status_code == 401
     assert client.get("/api/sources", headers={"X-API-Key": "secret"}).status_code == 200
     assert client.get("/api/health").status_code == 200   # /health reste public
+
+
+def test_compare_crop_level_has_a_common_crop_and_original_units(client):
+    """granularity=crop : une ligne par culture, cible ignorée pour l'alignement, doses par unité ORIGINALE."""
+    data = client.get("/api/compare", params={"productId": "P-LPC-G46", "countries": "FR,CA", "granularity": "crop"}).json()
+    assert data["granularity"] == "crop"
+    assert data["rows"] and all(r["targetNormalized"] is None for r in data["rows"])
+    common = [r for r in data["rows"] if sum(c["state"] == "present" for c in r["cells"]) >= 2]
+    if not common:
+        pytest.skip("aucune culture commune FR/CA dans les données actuelles")
+    for cell in common[0]["cells"]:
+        summary = cell["summary"]
+        assert summary["useCount"] == len(cell["uses"])
+        units = {u["doseUnitOriginal"] for u in cell["uses"] if u["doseValue"] is not None}
+        assert {d["unitOriginal"] for d in summary["doses"]} == units   # jamais de conversion ni de mélange d'unités
+        assert all(d["min"] <= d["max"] for d in summary["doses"])
+
+
+def test_compare_use_level_suggests_crop_level_when_nothing_is_comparable(client):
+    data = client.get("/api/compare", params={"productId": "P-LPC-G46", "countries": "FR,CA"}).json()
+    assert data["granularity"] == "use"
+    if not any(sum(c["state"] == "present" for c in r["cells"]) >= 2 for r in data["rows"]):
+        assert any("granularity=crop" in w for w in data["warnings"])
+
+
+def test_compare_rejects_unknown_granularity(client):
+    assert client.get("/api/compare", params={"productId": "P-LPC-G46", "countries": "FR,CA", "granularity": "x"}).status_code == 422

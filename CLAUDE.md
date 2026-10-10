@@ -28,7 +28,7 @@ C'est une preuve de concept, pas un système réglementaire officiel.
 10. Ne pas contourner authentification, quotas ou restrictions des sources ; ne pas scraper si une API/un téléchargement officiel existe.
 
 ## Architecture
-sources officielles → scripts/ingest_xx.py (coéquipiers) → data/incoming/xx_*.csv (format du starter kit)
+sources officielles → backend/etl/adapters/{france,germany,canada}/ (écrivent directement en base)
 → backend/etl/normalize.py (normalisation EPPO / ingrédients / produits sœurs, sans base)
 → backend/etl/load_db.py (charge les CSV dans PostgreSQL)
 → PostgreSQL (serveur d'équipe, URL dans DATABASE_URL du .env ; jamais d'identifiants dans le code).
@@ -51,13 +51,38 @@ Ne pas toucher frontend/ (sauf demande explicite). Ne pas modifier les fichiers 
 
 ## Environnement
 Windows / PowerShell, Python 3.11+, venv .venv. Équipe débutante : code simple, commenté, expliqué.
+Sous Windows : lancer les scripts avec PYTHONIOENCODING=utf-8 si erreur d'affichage.
 
-## État actuel (mis à jour 03:00)
-- Contrat API de référence : openapi.proposed.yaml (v0.2.1, Damien), expliqué dans docs/openapi-changes.md. schema/openapi.yaml = contrat d'origine, compatible, ne pas modifier.
-- API faite : backend/app/ (main.py, services.py, db.py lecture seule, models.py GÉNÉRÉ par datamodel-codegen, schemas.py). Lancement : uvicorn backend.app.main:app --port 3000. Tests : tests/test_api.py.
-- ETL fait : backend/etl/normalize.py et load_db.py (--normalize-db pour normaliser les lignes déjà en base). Schéma réel : docs/db_schema.md.
-- Base partagée : données réelles FR-EPHY (~13 500 produits), CA-PPID, DE-BVL. Données de test = is_synthetic=true (P-TEST-*), masquées par défaut.
-- Adaptateurs des coéquipiers : backend/etl/adapters/ (base.py commun, fr_ephy.py, ca_ppid.py, de_bvl.py), écrivent directement en base.
-- product_aliases.related_product_id (migration db/migrations/001_…) : lien EXACT vers le produit sœur ; ne JAMAIS joindre produits et sœurs par le nom.
-- Pas de date d'expiration côté FR : utiliser status_normalized = withdrawn.
-- Pas encore de clé IA : tout doit marcher en mode sans clé (mots-clés).
+## État actuel (mis à jour 07:30) — fait foi
+### Données (base PostgreSQL partagée)
+- FR-EPHY : ~13 500 homologations (1 687 actives avec 18 023 usages ; 11 882 retirées SANS usages ; aucune date d'expiration ; tous les usages "Autorisé").
+- DE-BVL : ~2 165 homologations, 82 239 usages ; toutes "active" avec expiration_date (l'API BVL ne publie que les produits autorisés) ; status_original vide (à compléter). Ex. LALGUARD M52 OD expire le 2027-04-30, LALSTOP G46 WG le 2035-03-31.
+- CA-PPID : ~3 000 homologations (2 089 actives + 937 retirées avec date de fin), ~125 000 usages ; AUCUNE dose (limite de source).
+- Aucune donnée de test en base (rechargé avec --no-test). P-DEMO-COMP-01 (kit) est is_synthetic.
+- product_aliases.related_product_id : lien EXACT vers le produit sœur ; ne JAMAIS joindre produits et sœurs par le nom.
+- ⚠️ Ne JAMAIS exécuter db/schema.sql ni db/reset_DANGER.sql sur la base partagée. Aucun DELETE/DROP/TRUNCATE. db/schema.sql est sans DROP (testé par tests/test_schema_sql.py).
+
+### Chargement et normalisation
+- Adaptateurs (écrivent directement en base) : backend/etl/adapters/france/ (Nhan), germany/ (Hanane, repris par Nhan), canada/ (Dyland).
+- Ordre de rechargement : `python backend/etl/load_db.py --no-test` (sources, produits pilotes LPC, dictionnaires) → adaptateurs → `python backend/etl/load_db.py --normalize-db`.
+- Normalisation : mappings LPC (prioritaires) puis dictionnaire IA data/ai_term_mapping.csv (method ai_suggested, review_status to_verify). Couverture actuelle des lignes : cultures 69 %, cibles 64 % (baisse due aux nouveaux termes anglais CA → extension du dictionnaire prévue). Voir docs/ai_term_mapping.md.
+
+### API et agent
+- Contrat : openapi.proposed.yaml (v0.2.1, Damien) + docs/openapi-changes.md. Hors contrat (à reporter par Damien) : matchedVia (/products), generator.mode (/ask), cropGroup/targetGroup, alignedBy, rowsComparable, granularity (/compare), /opportunities.
+- backend/app/ : main.py, services.py, db.py (lecture seule), models.py (GÉNÉRÉ par datamodel-codegen), schemas.py, agent.py, llm.py. Routes à la racine ET sous /api. Port BACK_PORT (3000).
+- /compare : alignement eppo → normalized_name → original ; granularity=use|crop. Meilleurs cas de démo : docs/demo_cases.md (LALGUARD M52 OD multi-pays ; G46 pour les produits sœurs).
+- /ask : pipeline 6 étapes, garde-fous dans le code ; Groq (AI_MODEL=openai/gpt-oss-120b, AI_FALLBACK_MODEL) avec retry + cache ; 3 phrases max ; phrases distinctes not_found / not_covered / source_unavailable ; sans clé → mode keyword. run_gold.py : 70/70, 5/5 en mode llm.
+- /opportunities fait (backend/app/opportunities.py) + intention /ask market_opportunity : "espaces libres pour le biocontrôle" par culture × cible et pays (usages chimiques actifs vs biologiques, score, produits LPC/sœurs autorisés, lpcOnly=true). Classification biologique/chimique par règle (hypothèse ; "chemical" = non identifié comme micro-organisme). withdrawnSameSubstance = produits retirés de même substance, SANS lien culture × cible (FR seulement). Aucun usage retiré n'existe dans les sources. Lent à froid (8–15 s), cache 2 min.
+- Tests : `python -m pytest -q` depuis la racine.
+
+### Déploiement et frontend
+- API en production : http://64.176.83.254:3000/api (image construite SUR le serveur par Nhan). Elle lit la base en direct ; après un changement de CODE ou de data/ → Nhan met à jour (git pull + docker build + docker rm -f lpc-api + docker run). Voir docs/deploy.md. API ouverte (API_KEY vide).
+- Aucun secret dans git ni dans les images (.dockerignore exclut .env).
+- docker-compose : sans MySQL ; postgres local optionnel (profil "localdb").
+- Frontend Angular (Damien) fusionné dans main ; doit pointer vers l'API du serveur.
+- Phrase de démo : Tomate × taches brunes (FR) = 51 usages chimiques vs 4 biologiques, PRESTOP (sœur de G46) autorisé → GET /opportunities?country=FR&lpcOnly=true&limit=5
+- Normalisation finale (lancée sur le serveur) : cultures 87 %, cibles 83 % des lignes. On ne normalise plus.
+- CA : +937 produits retirés (historique PPID, avec date de fin), 37 126 usages dont 21 101 avec cible → vrais usages retirés par culture × cible (Canada uniquement).
+- Démo : Tomate × acariens (FR) = 22 produits chimiques vs 2 biologiques, LALGUARD M52 OD autorisé (score = chemicalProducts / (1 + biologicalProducts)). Préchauffage des requêtes de démo au démarrage (backend/app/warmup.py).
+- Normalisation lourde : la lancer SUR LE SERVEUR (docker exec lpc-api python backend/etl/load_db.py --normalize-db).
+- 09:00 : gel des fonctionnalités backend, sauf "usages retirés réels (Canada)" (limite 10:15).

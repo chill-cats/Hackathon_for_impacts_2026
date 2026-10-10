@@ -2,10 +2,11 @@
 
 Ce module NE SE CONNECTE PAS à la base : il lit seulement les CSV de mapping du
 dossier data/ (eppo_crop_mapping.csv, eppo_pest_mapping.csv,
-active_entity_mapping.csv, product_name_mapping.csv).
+active_entity_mapping.csv, product_name_mapping.csv, ai_term_mapping.csv).
 
 Règles du projet :
 - Jamais d'invention : pas de correspondance (ou correspondance ambiguë) -> None.
+- Cultures/cibles : mapping LPC d'abord, puis data/ai_term_mapping.csv (traductions suggérées par l'IA, à vérifier).
 - On ne modifie jamais les valeurs *_original : on renvoie seulement une valeur
   normalisée que l'appelant range dans les colonnes *_normalized.
 - Les produits soeurs sont des HYPOTHESES ("to_verify") sauf validation explicite.
@@ -96,18 +97,61 @@ def _eppo_lookup(texte, filename):
                 "eppo_code": row["eppo_code"] or None,
                 "mapping_status": row["mapping_status"],
                 "method": "lpc_mapping",
+                "group": None, "confidence": None, "model_name": None, "review_status": None,
             }
     return None
 
 
+# ---------------------------------------------------------------------------
+# Dictionnaire de traduction suggéré par l'IA (data/ai_term_mapping.csv)
+# Second recours, utilisé SEULEMENT si le mapping LPC ne reconnaît pas la valeur.
+# ---------------------------------------------------------------------------
+@lru_cache(maxsize=None)
+def _load_ai_index():
+    """{(kind, texte nettoyé): ligne} ; kind = "crop" ou "target". Fichier absent -> index vide."""
+    path = DATA_DIR / "ai_term_mapping.csv"
+    if not path.exists():
+        return {}
+    index = {}
+    for row in _read_csv("ai_term_mapping.csv"):
+        key = clean(row["value_original"])
+        if key and row["normalized_en"]:
+            index[(row["kind"], key)] = row
+    return index
+
+
+def _ai_lookup(texte, kind):
+    """Valeur exacte (casse/accents ignorés) trouvée dans le dictionnaire IA, sinon None.
+
+    Le code EPPO n'est repris que si `eppo_code_candidate` est rempli (jamais deviné).
+    Une ligne que l'expert a passée à review_status = "validated" devient mapping_status "validated".
+    """
+    row = _load_ai_index().get((kind, clean(texte)))
+    if not row:
+        return None
+    return {
+        "normalized": row["normalized_en"],
+        "eppo_code": row["eppo_code_candidate"] or None,
+        "mapping_status": "validated" if row["review_status"] == "validated" else "ai_suggested",
+        "method": row["method"] or "ai_suggested",
+        "group": row["group_en"] or None,
+        "confidence": float(row["confidence"]) if row["confidence"] else None,
+        "model_name": row["model_name"] or None,
+        "review_status": row["review_status"],
+    }
+
+
 def normalize_crop(texte):
-    """Culture (toute langue du mapping) -> {normalized, eppo_code, mapping_status, method} ou None."""
-    return _eppo_lookup(texte, "eppo_crop_mapping.csv")
+    """Culture -> {normalized, eppo_code, mapping_status, method, group, ...} ou None.
+
+    Ordre : mapping LPC (toujours prioritaire), puis dictionnaire IA.
+    """
+    return _eppo_lookup(texte, "eppo_crop_mapping.csv") or _ai_lookup(texte, "crop")
 
 
 def normalize_target(texte):
-    """Cible (ravageur / maladie) -> {normalized, eppo_code, mapping_status, method} ou None."""
-    return _eppo_lookup(texte, "eppo_pest_mapping.csv")
+    """Cible (ravageur / maladie / adventice) -> même forme que normalize_crop, ou None."""
+    return _eppo_lookup(texte, "eppo_pest_mapping.csv") or _ai_lookup(texte, "target")
 
 
 # ---------------------------------------------------------------------------

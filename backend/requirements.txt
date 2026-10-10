@@ -4,3 +4,4 @@ uvicorn
 sqlalchemy
 psycopg[binary]
 python-dotenv
+openai

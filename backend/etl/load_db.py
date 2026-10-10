@@ -215,9 +215,21 @@ def load_file(conn, table, path, rejected, transform=None):
 # ---------------------------------------------------------------------------
 # Normalisation avant écriture (remplit seulement les colonnes vides) + preuves
 # ---------------------------------------------------------------------------
-def make_evidence(entity_type, entity_id, field, original, excerpt, confidence):
+def make_evidence(entity_type, entity_id, field, original, excerpt, confidence, method="lpc_mapping", model_name=None):
     return {"entity_type": entity_type, "entity_id": entity_id, "field_name": field,
-            "value_original": original, "excerpt": excerpt, "confidence": confidence}
+            "value_original": original, "excerpt": excerpt, "confidence": confidence,
+            "method": method, "model_name": model_name}
+
+
+def term_note(found):
+    """Texte de la preuve pour une culture/cible normalisée (mapping LPC ou dictionnaire IA)."""
+    return f"mapping_status={found['mapping_status']}; eppo_code={found['eppo_code']}"
+
+
+def term_evidence(found, entity_type, entity_id, field, original, extra=None):
+    """Preuve d'une valeur normalisée ; method/model viennent du résultat (IA : ai_suggested + nom du modèle)."""
+    return make_evidence(entity_type, entity_id, field, original, extra or term_note(found), found.get("confidence"),
+                         found["method"], found.get("model_name"))
 
 
 def normalize_products(evidence):
@@ -245,13 +257,15 @@ def normalize_uses(evidence):
         found = lookup(original)
         if not found:
             return  # pas de correspondance : on laisse vide (NULL)
-        note = f"mapping_status={found['mapping_status']}; eppo_code={found['eppo_code']}"
         if not row.get(name_col) and found["normalized"]:
             row[name_col] = found["normalized"]
-            evidence.append(make_evidence("use", row["use_id"], name_col, original, note, None))
+            evidence.append(term_evidence(found, "use", row["use_id"], name_col, original))
+            if found.get("group"):   # regroupement (IA) : pas de colonne dédiée, on le garde dans field_evidence
+                evidence.append(term_evidence(found, "use", row["use_id"], f"{kind}_group", original,
+                                              f"group_en={found['group']}"))
         if not row.get(code_col) and found["eppo_code"]:
             row[code_col] = found["eppo_code"]
-            evidence.append(make_evidence("use", row["use_id"], code_col, original, note, None))
+            evidence.append(term_evidence(found, "use", row["use_id"], code_col, original))
 
     def transform(rows):
         for _, row in rows:
@@ -264,14 +278,14 @@ def normalize_uses(evidence):
 EVIDENCE_SQL = text("""
     INSERT INTO field_evidence
         (entity_type, entity_id, field_name, value_original, excerpt, extraction_method,
-         confidence, validation_status, collected_at)
+         model_name, confidence, validation_status, collected_at)
     SELECT CAST(:entity_type AS text), CAST(:entity_id AS text), CAST(:field_name AS text),
-           CAST(:value_original AS text), CAST(:excerpt AS text), 'lpc_mapping',
-           CAST(:confidence AS numeric), 'to_verify', CAST(:collected_at AS timestamptz)
+           CAST(:value_original AS text), CAST(:excerpt AS text), CAST(:method AS text),
+           CAST(:model_name AS text), CAST(:confidence AS numeric), 'to_verify', CAST(:collected_at AS timestamptz)
     WHERE NOT EXISTS (
         SELECT 1 FROM field_evidence
         WHERE entity_type = :entity_type AND entity_id = :entity_id
-          AND field_name = :field_name AND extraction_method = 'lpc_mapping')
+          AND field_name = :field_name AND extraction_method = :method)
 """)
 
 
@@ -416,17 +430,25 @@ PRODUCTS_SCOPE = """AND (CAST(:cc AS text) IS NULL OR product_id IN
 EVIDENCE_FOR_IDS_SQL = text("""
     INSERT INTO field_evidence
         (entity_type, entity_id, field_name, value_original, excerpt, extraction_method,
-         confidence, validation_status, collected_at)
+         model_name, confidence, validation_status, collected_at)
     SELECT CAST(:et AS text), t.id, CAST(:fn AS text), CAST(:vo AS text), CAST(:ex AS text),
-           'lpc_mapping', CAST(:conf AS numeric), 'to_verify', now()
+           CAST(:method AS text), CAST(:model AS text), CAST(:conf AS numeric), 'to_verify', now()
     FROM unnest(CAST(:ids AS text[])) AS t(id)
     WHERE NOT EXISTS (
         SELECT 1 FROM field_evidence e
-        WHERE e.entity_type = :et AND e.entity_id = t.id AND e.field_name = :fn AND e.extraction_method = 'lpc_mapping')
+        WHERE e.entity_type = :et AND e.entity_id = t.id AND e.field_name = :fn AND e.extraction_method = :method)
 """)
 
 
-def fill_column(conn, table, key, set_col, orig_col, original, value, scope, cc, entity_type, excerpt, conf):
+def add_evidence(conn, entity_type, ids, field, original, excerpt, conf, method="lpc_mapping", model=None):
+    """Une ligne field_evidence par identifiant (sans doublon si on relance)."""
+    if ids:
+        conn.execute(EVIDENCE_FOR_IDS_SQL, {"et": entity_type, "ids": ids, "fn": field, "vo": original,
+                                            "ex": excerpt, "conf": conf, "method": method, "model": model})
+
+
+def fill_column(conn, table, key, set_col, orig_col, original, value, scope, cc, entity_type, excerpt, conf,
+                method="lpc_mapping", model=None):
     """UPDATE d'une colonne normalisee pour toutes les lignes qui ont cette valeur d'origine ET une colonne NULL.
 
     Renvoie la liste des identifiants modifies (pour les preuves et collection_runs).
@@ -435,9 +457,7 @@ def fill_column(conn, table, key, set_col, orig_col, original, value, scope, cc,
         text(f"UPDATE {table} SET {set_col} = :v WHERE {orig_col} = :o AND {set_col} IS NULL {scope} RETURNING {key}"),
         {"v": value, "o": original, "cc": cc}).all()
     ids = [r[0] for r in rows]
-    if ids:
-        conn.execute(EVIDENCE_FOR_IDS_SQL, {"et": entity_type, "ids": ids, "fn": set_col, "vo": original,
-                                            "ex": excerpt, "conf": conf})
+    add_evidence(conn, entity_type, ids, set_col, original, excerpt, conf, method, model)
     return ids
 
 
@@ -458,13 +478,16 @@ def normalize_uses_column(conn, label, orig_col, name_col, code_col, lookup, cc,
     s["recognized"] = len(recognized)
     for start in range(0, len(recognized), BATCH):   # par lots : un commit apres chaque lot
         for value, found in recognized[start:start + BATCH]:
-            note = f"mapping_status={found['mapping_status']}; eppo_code={found['eppo_code']}"
+            note = term_note(found)
             for column, new_value in ((name_col, found["normalized"]), (code_col, found["eppo_code"])):
                 if new_value:
                     ids = fill_column(conn, "uses", "use_id", column, orig_col, value, new_value,
-                                      USES_SCOPE, cc, "use", note, None)
+                                      USES_SCOPE, cc, "use", note, found["confidence"], found["method"], found["model_name"])
                     touched["uses"].update(ids)
                     s["updated"] += len(ids)
+                    if column == name_col and found["group"]:   # regroupement IA -> field_evidence (pas de colonne dédiée)
+                        add_evidence(conn, "use", ids, f"{label}_group", value, f"group_en={found['group']}",
+                                     found["confidence"], found["method"], found["model_name"])
         conn.commit()
     s["unrecognized"].sort(key=lambda x: -x[1])
 
@@ -525,11 +548,24 @@ def sisters_for_pilot_products(conn, cc):
     return proposed, changed
 
 
+def term_coverage(conn, cc):
+    """Part des cultures/cibles déjà normalisées : valeurs distinctes et lignes (avant/après la normalisation)."""
+    result = {}
+    for label, orig_col, name_col in (("crop", "crop_name_original", "crop_name_normalized"),
+                                      ("target", "target_name_original", "target_name_normalized")):
+        distinct, distinct_done, rows, rows_done = conn.execute(text(f"""
+            SELECT count(DISTINCT {orig_col}), count(DISTINCT {orig_col}) FILTER (WHERE {name_col} IS NOT NULL),
+                   count(*), count(*) FILTER (WHERE {name_col} IS NOT NULL)
+            FROM uses WHERE {orig_col} IS NOT NULL AND {orig_col} <> '' {USES_SCOPE}"""), {"cc": cc}).one()
+        result[label] = {"distinct": distinct, "distinct_done": distinct_done, "rows": rows, "rows_done": rows_done}
+    return result
+
+
 def normalize_db(conn, country):
     """Point d'entree du mode --normalize-db. Renvoie le dictionnaire de statistiques."""
     started = datetime.now(timezone.utc)
     touched = {"uses": set(), "products": set()}
-    stats = {}
+    stats = {"coverage_before": term_coverage(conn, country)}
     normalize_uses_column(conn, "crop", "crop_name_original", "crop_name_normalized", "eppo_crop_code",
                           nz.normalize_crop, country, touched, stats)
     normalize_uses_column(conn, "target", "target_name_original", "target_name_normalized", "eppo_target_code",
@@ -551,6 +587,7 @@ def normalize_db(conn, country):
         log_run(conn, source_id, started, "db:uses+products", n, n, "success", "normalize-db")
     conn.commit()
     stats["runs"] = dict(per_source)
+    stats["coverage_after"] = term_coverage(conn, country)
     return stats
 
 
@@ -560,6 +597,12 @@ def print_normalize_summary(stats, country):
         s = stats[label]
         print(f"{title:<30} valeurs distinctes vues={s['seen']}  reconnues={s['recognized']}  "
               f"non reconnues={len(s['unrecognized'])}  valeurs ecrites={s['updated']}")
+    print("\nCouverture de la normalisation (valeurs distinctes / lignes d'usages avec un nom normalisé) :")
+    for label, title in (("crop", "Cultures"), ("target", "Cibles")):
+        b, a = stats["coverage_before"][label], stats["coverage_after"][label]
+        for name, c in (("avant", b), ("après", a)):
+            print(f"  {title:<9} {name:<6} valeurs {c['distinct_done']:>5}/{c['distinct']:<5} ({c['distinct_done'] / max(c['distinct'], 1):.0%})"
+                  f"   lignes {c['rows_done']:>7}/{c['rows']:<7} ({c['rows_done'] / max(c['rows'], 1):.0%})")
     proposed, added = stats["sisters"]
     print(f"Produits soeurs candidats : {proposed} proposes, {added} alias ajoutes/mis a jour (to_verify)")
     print("collection_runs ajoutes (lignes modifiees par source) :", stats["runs"] or "aucun (rien a mettre a jour)")
