@@ -6,8 +6,8 @@ A successful extraction is not legal, licensing or human regulatory validation.
 import argparse
 import json
 from pathlib import Path
-from adapters import GermanyBVLAdapter
-from run_de import export
+from bvl import GermanyBVLAdapter
+from exporter import export
 
 
 def main():

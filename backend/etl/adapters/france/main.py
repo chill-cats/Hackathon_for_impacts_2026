@@ -14,7 +14,7 @@ from pathlib import Path
 import psycopg
 from psycopg import sql
 import exporter
-from validate_france_csv import validate
+from validate import validate
 
 LOG = logging.getLogger('france')
 ADAPTER = 'france-service-v1'

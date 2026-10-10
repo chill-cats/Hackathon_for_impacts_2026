@@ -380,7 +380,7 @@ def main():
             catalogue_last_update=metadata.get('last_update') if metadata else None,
             report=report)
         (stage / 'manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-        from validate_france_csv import validate
+        from validate import validate
         validation = validate(stage)
         (stage / 'validation_report.json').write_text(json.dumps(validation, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
         if validation['errors']:

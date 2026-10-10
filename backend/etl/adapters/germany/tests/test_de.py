@@ -9,10 +9,10 @@ import tempfile
 import unittest
 from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from adapters import GermanyBVLAdapter
-from adapters.base import COLUMNS
-from adapters.de_bvl import IncompleteCollection, norm_status, norm_date, number
-from adapters.export import validate, flat_loader, regulatory_loader
+from bvl import GermanyBVLAdapter
+from bvl.base import COLUMNS
+from bvl.de_bvl import IncompleteCollection, norm_status, norm_date, number
+from bvl.export import validate, flat_loader, regulatory_loader
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -206,6 +206,21 @@ class AdapterTests(unittest.TestCase):
     def test_requested_registration_absent_from_replay_fails(self):
         with self.assertRaisesRegex(ValueError,'Requested registrations absent'):
             self.convert(registrations=['999999-00'])
+
+    def test_compact_evidence_keeps_original_records_and_citations(self):
+        replay(self.directory,tables())
+        detailed=GermanyBVLAdapter(offline_dir=self.directory).run()
+        compact=GermanyBVLAdapter(offline_dir=self.directory,compact_evidence=True).run()
+        self.assertEqual(detailed.uses,compact.uses)
+        self.assertLess(len(compact.field_evidence),len(detailed.field_evidence))
+        for row in compact.field_evidence:
+            self.assertIsInstance(json.loads(row['value_original']),dict)
+            locator=json.loads(row['excerpt'])
+            self.assertIn('#/items/',locator['locator'])
+            self.assertEqual(len(locator['sha256']),64)
+        reg_rows=[json.loads(e['value_original']) for e in compact.field_evidence if e['entity_type']=='registration']
+        self.assertTrue(any(r.get('kodetext')=='Original restriction' for r in reg_rows))
+        self.assertTrue(validate(compact)['valid'])
 
     def test_both_export_contracts(self):
         a,b=self.convert()

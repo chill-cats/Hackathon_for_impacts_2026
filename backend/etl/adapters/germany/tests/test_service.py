@@ -11,8 +11,8 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import main as service
-from adapters import GermanyBVLAdapter
-from adapters.base import COLUMNS
+from bvl import GermanyBVLAdapter
+from bvl.base import COLUMNS
 from test_de import tables, replay
 
 URL=os.environ.get('TEST_DATABASE_URL')

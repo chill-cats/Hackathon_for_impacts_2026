@@ -5,8 +5,8 @@ import csv
 import json
 import tempfile
 from pathlib import Path
-from adapters import GermanyBVLAdapter
-from adapters.export import validate, flat_loader, regulatory_loader
+from bvl import GermanyBVLAdapter
+from bvl.export import validate, flat_loader, regulatory_loader
 
 
 def main():

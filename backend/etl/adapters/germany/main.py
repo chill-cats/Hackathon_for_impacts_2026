@@ -15,10 +15,10 @@ from urllib.parse import quote
 
 import psycopg
 from psycopg import sql
-from adapters import GermanyBVLAdapter
-from adapters.base import COLUMNS
-from adapters.de_bvl import BASE, VERSION, digest
-from adapters.export import validate
+from bvl import GermanyBVLAdapter
+from bvl.base import COLUMNS
+from bvl.de_bvl import BASE, VERSION, digest
+from bvl.export import validate
 
 LOG = logging.getLogger('germany')
 ADAPTER = 'germany-service-v1'
@@ -126,6 +126,9 @@ def merge(conn, directory, counts, registrations=None):
         SELECT alias_id FROM product_aliases JOIN managed_products USING(product_id) WHERE alias_id LIKE 'A-DE-BVL-%'
         UNION SELECT alias_id FROM incoming_product_aliases''')
     for table,key in KEYS.items():
+        conn.execute(sql.SQL('CREATE UNIQUE INDEX ON {} ({})').format(sql.Identifier('managed_'+table),sql.Identifier(key)))
+        conn.execute(sql.SQL('ANALYZE {}').format(sql.Identifier('managed_'+table)))
+    for table,key in KEYS.items():
         status = 'review_status' if table == 'product_aliases' else 'validation_status'
         expected = 'to_verify' if table == 'product_aliases' else 'automatically_extracted'
         protected = conn.execute(sql.SQL('SELECT count(*) FROM {} JOIN {} USING ({}) WHERE {} IS DISTINCT FROM %s').format(
@@ -139,9 +142,9 @@ def merge(conn, directory, counts, registrations=None):
     if conn.execute('''SELECT count(*) FROM uses u JOIN managed_uses USING(use_id)
         WHERE NOT EXISTS(SELECT 1 FROM managed_registrations r WHERE r.registration_id=u.registration_id)''').fetchone()[0]:
         raise ValueError('Existing use ownership collision')
-    ownership = """((entity_type='product' AND entity_id IN (SELECT product_id FROM managed_products))
-        OR (entity_type='registration' AND entity_id IN (SELECT registration_id FROM managed_registrations))
-        OR (entity_type='use' AND entity_id IN (SELECT use_id FROM managed_uses)))"""
+    ownership = """((entity_type='product' AND EXISTS (SELECT 1 FROM managed_products m WHERE m.product_id=field_evidence.entity_id))
+        OR (entity_type='registration' AND EXISTS (SELECT 1 FROM managed_registrations m WHERE m.registration_id=field_evidence.entity_id))
+        OR (entity_type='use' AND EXISTS (SELECT 1 FROM managed_uses m WHERE m.use_id=field_evidence.entity_id)))"""
     if conn.execute("SELECT count(*) FROM field_evidence WHERE " + ownership + " AND (extraction_method IS DISTINCT FROM 'official_api_json' OR validation_status IS DISTINCT FROM 'automatically_extracted')").fetchone()[0]:
         raise ValueError('Reviewed evidence requires reconciliation')
     old_count = conn.execute("SELECT count(*) FROM registrations JOIN managed_registrations USING(registration_id) WHERE source_id='DE-BVL'").fetchone()[0]
@@ -156,9 +159,9 @@ def merge(conn, directory, counts, registrations=None):
             sql.Identifier(table), columns, columns, sql.Identifier('incoming_'+table), sql.Identifier(key), assignments))
     # Keep evidence for registrations/products no longer observed. Remove their
     # obsolete use rows but retain the raw snapshots in persistent storage.
-    evidence_replace = """((entity_type='product' AND entity_id IN (SELECT product_id FROM incoming_products))
-        OR (entity_type='registration' AND entity_id IN (SELECT registration_id FROM incoming_registrations))
-        OR (entity_type='use' AND entity_id IN (SELECT use_id FROM managed_uses)))"""
+    evidence_replace = """((entity_type='product' AND EXISTS (SELECT 1 FROM incoming_products i WHERE i.product_id=field_evidence.entity_id))
+        OR (entity_type='registration' AND EXISTS (SELECT 1 FROM incoming_registrations i WHERE i.registration_id=field_evidence.entity_id))
+        OR (entity_type='use' AND EXISTS (SELECT 1 FROM managed_uses m WHERE m.use_id=field_evidence.entity_id)))"""
     conn.execute('DELETE FROM field_evidence WHERE ' + evidence_replace)
     conn.execute('DELETE FROM uses WHERE use_id IN (SELECT use_id FROM managed_uses)')
     for table in ('uses','field_evidence'):
@@ -178,7 +181,7 @@ def previous_success(conn, scope):
     return (row[0],json.loads(row[1])) if row else (None,{})
 
 
-def cycle(url, data_dir, interval, force=False, registrations=None):
+def cycle(url, data_dir, interval, force=False, registrations=None, replay_dir=None):
     scope=scope_config(registrations)
     with connect(url) as conn:
         if not conn.execute('SELECT pg_try_advisory_lock(%s)', (LOCK,)).fetchone()[0]:
@@ -193,10 +196,15 @@ def cycle(url, data_dir, interval, force=False, registrations=None):
             WHERE source_id='DE-BVL' AND status='running' AND notes LIKE %s""", (notes(error='Previous process stopped before completion'),MARKER))
         run_id=conn.execute("INSERT INTO collection_runs(source_id,status,notes) VALUES ('DE-BVL','running',%s) RETURNING run_id",(notes(scope_key=digest(scope),scope=scope),)).fetchone()[0]
         directory=Path(data_dir)/str(run_id)
-        adapter=GermanyBVLAdapter(registrations=registrations)
+        adapter_options=dict(registrations=registrations,compact_evidence=True)
+        if replay_dir is not None:
+            adapter_options['offline_dir']=replay_dir
+        adapter=GermanyBVLAdapter(**adapter_options)
         try:
             directory.mkdir(parents=True,exist_ok=False)
             raw=adapter.fetch()
+            if replay_dir and (not isinstance(adapter.scope,dict) or sorted(adapter.scope.get('registrations',[])) != sorted(registrations or [])):
+                raise ValueError('Replay scope does not match configured registrations')
             adapter.write_snapshots(directory)
             sha=snapshot_digest(raw)
             bundle=adapter.to_canonical(raw)
@@ -233,7 +241,10 @@ def main():
     parser.add_argument('--once',action='store_true',help='Run one due refresh and exit (operations/testing)')
     parser.add_argument('--force',action='store_true',help='With --once, reprocess even if not due/unchanged')
     parser.add_argument('--check-db',action='store_true',help='Read-only server metadata check')
+    parser.add_argument('--replay',type=Path,help='With --once --force, recover from a complete saved snapshot')
     args=parser.parse_args()
+    if args.replay and not (args.once and args.force):
+        parser.error('--replay requires --once --force')
     if args.force and not args.once:
         parser.error('--force requires --once')
     url=os.environ.get('DATABASE_URL')
@@ -269,7 +280,7 @@ def main():
     failures=0
     while not STOP.is_set():
         try:
-            result=cycle(url,data_dir,interval,args.force,registrations)
+            result=cycle(url,data_dir,interval,args.force,registrations,args.replay)
             failures=0
             LOG.info('%s',json.dumps(result))
             delay=result['wait']

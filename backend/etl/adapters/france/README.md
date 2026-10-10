@@ -8,6 +8,8 @@ restarts. A changed interval takes effect after restarting the service.
 
 ## One-time deployment
 
+Run the commands below from `adapters/france/` (relative to the repository root).
+
 Create `.env` from `.env.example`, set `DATABASE_URL`, then:
 
 ```sh
