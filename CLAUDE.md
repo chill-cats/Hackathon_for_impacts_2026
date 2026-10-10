@@ -86,3 +86,4 @@ Windows / PowerShell, Python 3.11+, venv .venv. Équipe débutante : code simple
 - /compare granularity=crop (alignement par culture si les cibles manquent, ex. CA). Cas de démo réels dans docs/demo_cases.md : meilleur produit multi-pays = LALGUARD M52 OD (5 cultures communes FR/DE et CA/DE) ; produits sœurs = G46 (PRESTOP en CA/FR/DE) ; FR/CA = fraise (FRAAN).
 - Homologations FR retirées : aucun usage en base ; statut DE absent (à corriger par Hanane). "Opportunité marché" basée sur source.etat usage (field_evidence), en cours.
 - db/schema.sql sécurisé (aucun DROP), testé par tests/test_schema_sql.py.
+- Déploiement : image backend sur ttl.sh (public, expire ~18:40), AUCUN secret dedans (.dockerignore exclut .env, contrôle fait). Procédure : docs/deploy.md. Dans le conteneur, DATABASE_URL utilise l'IP publique du serveur (localhost = le conteneur). L'API tourne sur le serveur de la base (Nhan).
