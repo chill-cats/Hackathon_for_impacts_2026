@@ -26,6 +26,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import db  # noqa: F401  (charge le fichier .env)
 from . import agent
+from . import opportunities as opp
 from . import models as m
 from . import schemas as s
 from . import services
@@ -212,6 +213,21 @@ def listExpirations(
         crop: str | None = Query(None, description="Only registrations with a use on this crop (EPPO code or name)."),
         includeSynthetic: bool = Query(False), limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
     return services.expirations(withinMonths, referenceDate, country, crop, includeSynthetic, limit, offset)
+
+
+@secured.get("/opportunities", tags=["market"], response_model=s.OpportunitiesResponse, response_model_exclude_unset=True,
+             responses={401: PROBLEM, 404: PROBLEM},
+             summary="Free spaces for biocontrol: crop x target pairs with many active chemical uses and few biological ones (outside the contract)")
+def listOpportunities(
+        country: str | None = COUNTRY,
+        crop: str | None = Query(None, description="Crop, EPPO code or name in any language."),
+        target: str | None = Query(None, description="Pest or disease, EPPO code or name in any language."),
+        productId: str | None = Query(None, description="Only crop x target pairs where the substance of this LPC product already has an active use in some country."),
+        minChemicalUses: int = Query(5, ge=1, le=1000, description="Minimum number of active chemical uses for a pair to be listed."),
+        lpcOnly: bool = Query(False, description="Only pairs where an LPC product, a sister candidate or a product with the same substance is already authorized."),
+        limit: int = Query(20, ge=1, le=100)):
+    """Aide à l'analyse, pas une décision réglementaire. Hors contrat (voir docs/openapi-changes.md)."""
+    return opp.opportunities(country, crop, target, limit, productId, minChemicalUses, lpcOnly)
 
 
 @secured.get("/sources", tags=["sources"], response_model=s.SourcesResponse, response_model_exclude_unset=True,

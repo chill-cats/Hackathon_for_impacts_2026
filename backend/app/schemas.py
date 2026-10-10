@@ -9,8 +9,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from .models import (Answer, AnswerGenerator, ComparisonCell, ComparisonResponse, ComparisonRow, CountryCoverage, MatchedVia, Product,
-                     Registration, SourceInfo)
+from .models import (Answer, AnswerGenerator, ComparisonCell, ComparisonResponse, ComparisonRow, CountryCoverage, Evidence, Intent,
+                     MatchedVia, Product, Registration, SourceInfo)
 
 
 class HealthResponse(BaseModel):
@@ -76,6 +76,71 @@ class AnswerGeneratorOut(AnswerGenerator):
     mode: Literal["llm", "keyword"] | None = None
 
 
+# ---------------------------------------------------------------------------
+# /opportunities : HORS CONTRAT (à reporter par Damien, voir docs/openapi-changes.md)
+# ---------------------------------------------------------------------------
+class OpportunityProduct(BaseModel):
+    """Produit LPC, sœur ou de même substance autorisé sur le couple. Sœurs et même substance = hypothèses."""
+    productId: str
+    commercialName: str | None = None
+    relation: Literal["lpc_product", "sister_candidate", "same_active_substance"]
+    reviewStatus: Literal["validated", "to_verify", "confirmed", "rejected"] | str
+    productCategory: Literal["biological", "chemical", "unknown"]
+    categoryMethod: Literal["rule_based"] = "rule_based"
+    evidenceIds: list[str]
+
+
+class WithdrawnSameSubstance(BaseModel):
+    """Produits RETIRÉS de même substance, SANS lien culture × cible. Jamais un usage retiré."""
+    countryCode: str
+    withdrawnProducts: int
+    substancesCompared: int
+    note: str
+    evidenceIds: list[str]
+
+
+class Opportunity(BaseModel):
+    countryCode: str
+    cropNormalized: str
+    targetNormalized: str
+    chemicalUses: int
+    biologicalUses: int
+    unknownCategoryUses: int
+    chemicalProducts: int
+    biologicalProducts: int
+    unknownCategoryProducts: int
+    chemicalToBiologicalRatio: float | None = None   # null quand aucun usage biologique (division par zéro)
+    biocontrolSpaceScore: float
+    usesWithUnknownRegistrationStatus: int
+    lpcProducts: list[OpportunityProduct]
+    withdrawnSameSubstance: WithdrawnSameSubstance | None = None
+    evidenceIds: list[str]
+    chemicalEvidenceIds: list[str]
+    biologicalEvidenceIds: list[str]
+    productCategoryMethod: Literal["rule_based"] = "rule_based"
+    disclaimer: str
+
+
+class OpportunitiesResponse(BaseModel):
+    items: list[Opportunity]
+    evidence: list[Evidence]
+    warnings: list[str]
+    categoryMethod: Literal["rule_based"] = "rule_based"
+    scoreFormula: str
+    minChemicalUses: int
+    disclaimer: str
+
+
+class SuggestedQuestionOut(BaseModel):
+    label: str
+    question: str
+    intent: Intent | Literal["market_opportunity"] | None = None
+
+
 class AnswerOut(Answer):
-    """Answer du contrat, avec le `generator` enrichi du champ `mode`."""
+    """Answer du contrat, avec le `generator` enrichi du champ `mode`, l'intention `market_opportunity` (hors contrat)
+    et les `opportunities` (couples culture × cible, uniquement pour cette intention)."""
+    intent: Intent | Literal["market_opportunity"] | None = None
     generator: AnswerGeneratorOut | None = None
+    opportunities: list[Opportunity] | None = None
+    suggestedQuestions: list[SuggestedQuestionOut] | None = None

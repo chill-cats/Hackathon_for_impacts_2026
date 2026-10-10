@@ -216,3 +216,32 @@ See the French sections above: the 4-step connector import (tunnel on port 8080,
 - Response: top-level `granularity`; in `crop` mode `rows[].targetNormalized` / `eppoTargetCode` are `null` and each present cell has `summary`: `{useCount, targetsOriginal[], doses[{unitOriginal, min, max}]}`. Doses are per ORIGINAL unit, never converted or mixed. "Authorized yes/no" = `state` (`present` or not).
 - When `use` level has no row with values in 2+ countries but a crop exists in 2 countries, `warnings` suggests `granularity=crop`.
 - `/ask` (`use_comparison`) switches to crop level automatically in that case and says so in the first sentence.
+
+## Added outside the contract: `GET /opportunities` and intent `market_opportunity` (for Damien to report)
+
+"Free spaces for biocontrol": per country × normalized crop × normalized target, how many ACTIVE chemical vs biological uses exist. Read-only, decision support only. Code: `backend/app/opportunities.py`.
+
+**Request**: `GET /opportunities?country=FR&crop=&target=&productId=&lpcOnly=false&minChemicalUses=5&limit=20` (`lpcOnly=true` keeps only pairs where an LPC product, a sister candidate or a same-substance product is already authorized; `limit` 1-100, `country` optional ISO code, `crop` / `target` EPPO code or name in any language, `productId` = LPC product, e.g. `P-LPC-M52`). Also available under `/api/opportunities`. Unknown `productId` → 404.
+
+**Response** `OpportunitiesResponse`: `items[]`, `evidence[]` (the contract `Evidence` objects), `warnings[]`, `categoryMethod` (`rule_based`), `scoreFormula`, `minChemicalUses`, `disclaimer`. Each `items[]` entry (`Opportunity`):
+
+| Field | Meaning |
+|---|---|
+| `countryCode`, `cropNormalized`, `targetNormalized` | the pair (only uses that have BOTH normalized) |
+| `chemicalUses`, `biologicalUses`, `unknownCategoryUses` | active uses by category (rule-based, see below) |
+| `chemicalProducts`, `biologicalProducts`, `unknownCategoryProducts` | distinct products behind those uses |
+| `chemicalToBiologicalRatio` | `chemicalUses / biologicalUses`, `null` when there is no biological use |
+| `biocontrolSpaceScore` | `chemicalUses / (1 + biologicalUses)`; the list is sorted by it, descending |
+| `usesWithUnknownRegistrationStatus` | uses of registrations whose source gives no status (DE). They are counted as present, not as "active" |
+| `lpcProducts[]` | LPC products, sister candidates and same-active-substance products authorized on the pair: `relation` (`lpc_product` / `sister_candidate` / `same_active_substance`), `reviewStatus` (anything but `lpc_product` is `to_verify` = hypothesis), `productCategory`, `categoryMethod`, `evidenceIds` |
+| `withdrawnSameSubstance` | see below, `null` when the country has no "withdrawn" status in its source |
+| `evidenceIds`, `chemicalEvidenceIds`, `biologicalEvidenceIds` | `use:` / `registration:` ids present in the top-level `evidence[]` (up to 2 sample uses per category: the counts are over all uses, the evidence is a sample) |
+| `productCategoryMethod`, `disclaimer` | `rule_based`; "Aide à l'analyse, pas une décision réglementaire ; classification biologique/chimique par règle, à vérifier." |
+
+**What the data does NOT say** (also in `warnings`): no source provides withdrawn USES (FR `RETIRE` registrations have no use rows; DE has no status). The ranking shows today's state, not a decline over time.
+
+**Biological / chemical classification** (`productCategory`, always `categoryMethod = rule_based`, a hypothesis and never an official category): `biological` if the ORIGINAL active entity contains a micro-organism genus (Bacillus, Trichoderma, Clonostachys, Coniothyrium, Metarhizium, Beauveria, Pseudomonas, Streptomyces, Saccharomyces, Paecilomyces… plus "virus" for insect viruses) or if the product is an LPC product; `unknown` if the active entity is empty; `chemical` otherwise. So `chemical` means "not identified as a micro-organism": copper, sulphur, pyrethrins are in it. The list is `BIO_GENERA` in `opportunities.py`.
+
+**`withdrawnSameSubstance`** (product-level indicator, never a withdrawn use): `{countryCode, withdrawnProducts, substancesCompared, note, evidenceIds}`. Counts the WITHDRAWN products of the same country that contain a substance of the chemical products active on the pair (exact substance name). It has no link to the crop × target. The `note` says so.
+
+**`/ask`**: new `intent` value `market_opportunity` (questions such as "Où les usages chimiques reculent-ils sur la vigne ?", "Quelles opportunités pour LALGUARD M52 ?"). `Answer.opportunities` carries the top 5 pairs (same `Opportunity` objects); the sentence uses only the facts built from them and ends with the reminder above. With a product, the pairs are those where the product's substance is already authorized in at least one country but not in the country listed. `Answer.suggestedQuestions[].intent` accepts the new value too. Frontend: `Intent` needs the new enum value.

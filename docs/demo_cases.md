@@ -1,6 +1,6 @@
 # Cas de démo (comparaisons réelles)
 
-Généré par `scripts/find_demo_cases.py` le 2026-10-10 04:23 UTC, lecture seule sur la base partagée. Les chiffres sont des comptes de lignes extraites : une absence ne prouve jamais une absence d'homologation. Les sœurs sont des hypothèses (`to_verify`). Les doses gardent leur unité originale (jamais converties).
+Généré par `scripts/find_demo_cases.py` le 2026-10-10 05:27 UTC, lecture seule sur la base partagée. Les chiffres sont des comptes de lignes extraites : une absence ne prouve jamais une absence d'homologation. Les sœurs sont des hypothèses (`to_verify`). Les doses gardent leur unité originale (jamais converties).
 
 Base URL des requêtes : `http://localhost:3000/api` (lancer `uvicorn backend.app.main:app --port 3000`).
 
@@ -73,7 +73,8 @@ Produits distincts par culture et par pays (statut normalisé `withdrawn` ou `ex
 
 | Pays | Statut normalisé | Homologations | Usages |
 |---|---|---|---|
-| CA | active | 5 | 113 |
+| CA | active | 2089 | 87816 |
+| CA | unknown | 11 | 489 |
 | DE | unknown | 2165 | 82239 |
 | FR | active | 1687 | 18023 |
 | FR | withdrawn | 11882 | 0 |
@@ -83,3 +84,47 @@ Cas de démo possible : lister les retraits sans culture avec `GET /expirations?
 Requêtes :
 
 - (voir ci-dessus : `GET /expirations?country=FR`)
+
+## d) Opportunité marché : espaces libres pour le biocontrôle
+
+**Aide à l'analyse, pas une décision réglementaire ; classification biologique/chimique par règle, à vérifier.** Par couple culture × cible normalisés : usages ACTIFS de produits chimiques vs biologiques (catégorie déduite du nom de la substance active, hypothèse). Score = usages chimiques / (1 + usages biologiques). Aucun usage retiré n'existe dans les sources : le classement montre l'état actuel, pas un recul. « Retirés, même substance » = produits retirés du même pays contenant une substance de ces chimiques, SANS lien culture × cible (ce ne sont pas des usages retirés). Un 0 biologique ne prouve pas l'absence de produit biologique homologué.
+
+Requête exacte : `GET /opportunities?country=FR&limit=5`
+
+| Culture × cible | Pays | Usages chimiques | Usages biologiques | Score | Produits LPC / sœurs autorisés | Retirés, même substance |
+|---|---|---|---|---|---|---|
+| General treatments × Slugs and snails | FR | 165 | 0 | 165.0 | aucun | 285 |
+| Wheat × Rust | FR | 151 | 0 | 151.0 | aucun | 254 |
+| Wheat × Septoria leaf spot | FR | 134 | 0 | 134.0 | aucun | 481 |
+| Barley × Rust | FR | 128 | 0 | 128.0 | aucun | 144 |
+| Barley × Rhynchosporium leaf blotch (Rhynchosporium secalis) | FR | 126 | 0 | 126.0 | aucun | 202 |
+
+Requête exacte : `GET /opportunities?country=DE&limit=5`
+
+| Culture × cible | Pays | Usages chimiques | Usages biologiques | Score | Produits LPC / sœurs autorisés | Retirés, même substance |
+|---|---|---|---|---|---|---|
+| Ornamental plants × Spider mites | DE | 1135 | 0 | 1135.0 | aucun | n/a |
+| Ornamental plants × Scale insects | DE | 826 | 0 | 826.0 | aucun | n/a |
+| Ornamental plants × Aphids | DE | 743 | 0 | 743.0 | aucun | n/a |
+| Ornamental plants × Sucking insects | DE | 712 | 0 | 712.0 | aucun | n/a |
+| Bottle gourd × Sucking insects | DE | 594 | 0 | 594.0 | aucun | n/a |
+
+Requête exacte : `GET /opportunities?country=FR&lpcOnly=true&limit=5`
+
+| Culture × cible | Pays | Usages chimiques | Usages biologiques | Score | Produits LPC / sœurs autorisés | Retirés, même substance |
+|---|---|---|---|---|---|---|
+| Tomato; Eggplant × Brown spot diseases | FR | 51 | 4 | 10.2 | PRESTOP (sister_candidate) | 161 |
+| Cucurbits with edible peel × Brown spot diseases | FR | 19 | 1 | 9.5 | PRESTOP (sister_candidate) | 59 |
+| Tomato; Eggplant × Mites | FR | 25 | 2 | 8.33 | LALGUARD M52 OD (lpc_product) | 78 |
+| Grapevine × Thrips | FR | 18 | 2 | 6.0 | LALGUARD M52 OD (lpc_product) | 110 |
+| Cut flowers and foliage plants × Botrytis cinerea | FR | 15 | 2 | 5.0 | PRESTOP (sister_candidate) | 86 |
+
+Requête exacte : `GET /opportunities?productId=P-LPC-M52&limit=5`
+
+| Culture × cible | Pays | Usages chimiques | Usages biologiques | Score | Produits LPC / sœurs autorisés | Retirés, même substance |
+|---|---|---|---|---|---|---|
+| Leek × Thrips | DE | 7 | 0 | 7.0 | aucun | n/a |
+| Onion × Thrips | DE | 7 | 0 | 7.0 | aucun | n/a |
+| Grapevine × Thrips | DE | 6 | 0 | 6.0 | aucun | n/a |
+
+Avec `lpcOnly=true`, seuls les couples où un produit LPC, un candidat sœur ou un produit de même substance est déjà autorisé sont gardés (potentiel d'extension d'un produit déjà présent). Avec `productId`, la liste montre les couples où la substance du produit est autorisée dans au moins un pays mais pas dans le pays indiqué. Les produits sœurs et de même substance sont des hypothèses (`to_verify`). Question `/ask` associée : « Où les usages chimiques reculent-ils sur la vigne ? » ou « Quelles opportunités pour LALGUARD M52 ? ».

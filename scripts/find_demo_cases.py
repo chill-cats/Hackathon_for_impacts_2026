@@ -6,7 +6,8 @@ Usage (racine du dépôt, venv activé, DATABASE_URL dans .env) :
 Trois recherches :
   a) produits pilotes LPC + produits sœurs : lignes comparables par paire de pays, niveau use et niveau crop ;
   b) top 10 des couples (culture normalisée, cible normalisée) présents en FR ET DE, avec le plus de produits ;
-  c) top 10 des cultures avec des produits retirés/expirés dans au moins un pays.
+  c) top 10 des cultures avec des produits retirés/expirés dans au moins un pays ;
+  d) « Opportunité marché » : les 5 meilleurs couples culture × cible (usages chimiques actifs, peu ou pas de biologiques) par pays.
 Aucun INSERT/UPDATE/DELETE : seulement des SELECT (via backend.app.db.query, connexion en lecture seule).
 """
 import itertools
@@ -21,7 +22,7 @@ sys.path.insert(0, str(ROOT))
 from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(ROOT / ".env")
-from backend.app import services  # noqa: E402
+from backend.app import opportunities, services  # noqa: E402
 from backend.app.db import query  # noqa: E402
 
 PILOTS = ["P-LPC-G46", "P-LPC-CONTANS", "P-LPC-M52"]
@@ -103,6 +104,17 @@ def part_c():
         FROM x JOIN gone USING (crop) GROUP BY x.crop, x.country_code ORDER BY x.crop, x.country_code""")
 
 
+def part_d():
+    """Les 5 meilleurs couples par pays (FR, DE) + un exemple avec un produit LPC. Même fonction que GET /opportunities."""
+    out = []
+    for query_text, kwargs in (("country=FR&limit=5", {"country": "FR"}), ("country=DE&limit=5", {"country": "DE"}),
+                               ("country=FR&lpcOnly=true&limit=5", {"country": "FR", "lpc_only": True}),
+                               ("productId=P-LPC-M52&limit=5", {"product_id": "P-LPC-M52"})):
+        data = opportunities.opportunities(kwargs.get("country"), None, None, 5, kwargs.get("product_id"), 5, kwargs.get("lpc_only", False))
+        out.append((query_text, data["items"]))
+    return out
+
+
 def md_table(headers, rows):
     lines = ["| " + " | ".join(headers) + " |", "|" + "---|" * len(headers)]
     lines += ["| " + " | ".join(str(c) for c in row) + " |" for row in rows]
@@ -116,6 +128,8 @@ def main():
     b = part_b()
     print("c) cultures avec produits retirés…")
     c = part_c()
+    print("d) opportunités biocontrôle…")
+    d = part_d()
 
     out = ["# Cas de démo (comparaisons réelles)", "",
            f"Généré par `scripts/find_demo_cases.py` le {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC, lecture seule sur la base partagée. "
@@ -168,6 +182,31 @@ def main():
         out.append(f"- {crop} : `GET /expirations?crop={crop}&withinMonths=12`")
     if not c:
         out.append("- (voir ci-dessus : `GET /expirations?country=FR`)")
+
+    out += ["", "## d) Opportunité marché : espaces libres pour le biocontrôle", "",
+            "**Aide à l'analyse, pas une décision réglementaire ; classification biologique/chimique par règle, à vérifier.** "
+            "Par couple culture × cible normalisés : usages ACTIFS de produits chimiques vs biologiques (catégorie déduite du nom de la "
+            "substance active, hypothèse). Score = usages chimiques / (1 + usages biologiques). Aucun usage retiré n'existe dans les "
+            "sources : le classement montre l'état actuel, pas un recul. « Retirés, même substance » = produits retirés du même pays "
+            "contenant une substance de ces chimiques, SANS lien culture × cible (ce ne sont pas des usages retirés). "
+            "Un 0 biologique ne prouve pas l'absence de produit biologique homologué.", ""]
+    for query_text, items in d:
+        out += [f"Requête exacte : `GET /opportunities?{query_text}`", ""]
+        if not items:
+            out += ["Aucun couple trouvé.", ""]
+            continue
+        rows = []
+        for it in items:
+            wd = it["withdrawnSameSubstance"]
+            lpc = ", ".join(f"{p['commercialName']} ({p['relation']})" for p in it["lpcProducts"][:3]) or "aucun"
+            rows.append((f"{it['cropNormalized']} × {it['targetNormalized']}", it["countryCode"], it["chemicalUses"],
+                         it["biologicalUses"], it["biocontrolSpaceScore"], lpc, wd["withdrawnProducts"] if wd else "n/a"))
+        out += [md_table(["Culture × cible", "Pays", "Usages chimiques", "Usages biologiques", "Score", "Produits LPC / sœurs autorisés",
+                          "Retirés, même substance"], rows), ""]
+    out += ["Avec `lpcOnly=true`, seuls les couples où un produit LPC, un candidat sœur ou un produit de même substance est déjà autorisé "
+            "sont gardés (potentiel d'extension d'un produit déjà présent). Avec `productId`, la liste montre les couples où la substance du produit est autorisée dans au moins un pays mais pas dans "
+            "le pays indiqué. Les produits sœurs et de même substance sont des hypothèses (`to_verify`). Question `/ask` associée : "
+            "« Où les usages chimiques reculent-ils sur la vigne ? » ou « Quelles opportunités pour LALGUARD M52 ? »."]
 
     path = ROOT / "docs" / "demo_cases.md"
     path.write_text("\n".join(out) + "\n", encoding="utf-8")
