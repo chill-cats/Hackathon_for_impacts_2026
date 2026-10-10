@@ -211,10 +211,10 @@ Coché seulement quand c'est vrai et vérifiable ; ◐ = partiel.
 | Personne | Rôle |
 |---|---|
 | **Youness** | Coordination, backend et agent IA |
-| **Dyland** | Adaptateur Canada |
-| **Nhan** | Adaptateurs France et Allemagne, serveur et déploiement |
+| **Dyland** | Adaptateur Canada et recherche data  |
+| **Nhan** | Adaptateurs France et déploiement |
 | **Damien** | Frontend, contrat d'API, connecteur Microsoft 365 |
-| **Hanane** | Adaptateur Allemagne (version de départ), recherche Azure |
+| **Hanane** | Adaptateur Allemagne, recherche Azure |
 
 ---
 
