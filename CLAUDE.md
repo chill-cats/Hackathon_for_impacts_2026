@@ -75,3 +75,6 @@ Windows / PowerShell, Python 3.11+, venv .venv. Équipe débutante : code simple
 - Pas de date d'expiration côté FR : utiliser status_normalized = withdrawn.
 - ⚠️ Ne JAMAIS exécuter db/schema.sql ni db/reset_DANGER.sql sur la base partagée. Aucun DELETE/DROP/TRUNCATE.
 - Frontend : Damien travaille sur une branche séparée, fusion dans main prévue avant 11:00.
+
+- IA : fournisseur Groq configuré dans .env (AI_PROVIDER=groq, AI_BASE_URL, AI_MODEL) → /ask en mode "llm" ; sans clé → mode "keyword".
+- Frontend Angular fusionné dans main (branche frontend de Damien). /compare expose cropGroup/targetGroup (hors contrat, à reporter par Damien).
