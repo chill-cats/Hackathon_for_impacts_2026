@@ -13,6 +13,9 @@ server {
     resolver 127.0.0.11 valid=10s;
     set $back_upstream ${BACK_URL};
     proxy_pass $back_upstream;
+    # /ask et /opportunities peuvent être lents (IA, grosse base, préchauffage du back juste après un démarrage) : 60 s par défaut est trop court.
+    proxy_connect_timeout 10s;
+    proxy_read_timeout 180s;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
