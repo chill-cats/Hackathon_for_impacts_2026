@@ -56,8 +56,8 @@ Sous Windows : lancer les scripts avec PYTHONIOENCODING=utf-8 si erreur d'affich
 ## État actuel (mis à jour 07:30) — fait foi
 ### Données (base PostgreSQL partagée)
 - FR-EPHY : ~13 500 homologations (1 687 actives avec 18 023 usages ; 11 882 retirées SANS usages ; aucune date d'expiration ; tous les usages "Autorisé").
-- DE-BVL : ~2 165 homologations, 82 239 usages ; status_normalized = unknown partout (correction en cours, Nhan).
-- CA-PPID : ~2 100 homologations, 88 305 usages dont 43 893 avec cible, AUCUNE dose (limite de source).
+- DE-BVL : ~2 165 homologations, 82 239 usages ; toutes "active" avec expiration_date (l'API BVL ne publie que les produits autorisés) ; status_original vide (à compléter). Ex. LALGUARD M52 OD expire le 2027-04-30, LALSTOP G46 WG le 2035-03-31.
+- CA-PPID : ~3 000 homologations (2 089 actives + 937 retirées avec date de fin), ~125 000 usages ; AUCUNE dose (limite de source).
 - Aucune donnée de test en base (rechargé avec --no-test). P-DEMO-COMP-01 (kit) est is_synthetic.
 - product_aliases.related_product_id : lien EXACT vers le produit sœur ; ne JAMAIS joindre produits et sœurs par le nom.
 - ⚠️ Ne JAMAIS exécuter db/schema.sql ni db/reset_DANGER.sql sur la base partagée. Aucun DELETE/DROP/TRUNCATE. db/schema.sql est sans DROP (testé par tests/test_schema_sql.py).
@@ -81,3 +81,8 @@ Sous Windows : lancer les scripts avec PYTHONIOENCODING=utf-8 si erreur d'affich
 - docker-compose : sans MySQL ; postgres local optionnel (profil "localdb").
 - Frontend Angular (Damien) fusionné dans main ; doit pointer vers l'API du serveur.
 - Phrase de démo : Tomate × taches brunes (FR) = 51 usages chimiques vs 4 biologiques, PRESTOP (sœur de G46) autorisé → GET /opportunities?country=FR&lpcOnly=true&limit=5
+- Normalisation finale (lancée sur le serveur) : cultures 87 %, cibles 83 % des lignes. On ne normalise plus.
+- CA : +937 produits retirés (historique PPID, avec date de fin), 37 126 usages dont 21 101 avec cible → vrais usages retirés par culture × cible (Canada uniquement).
+- Démo : Tomate × acariens (FR) = 22 produits chimiques vs 2 biologiques, LALGUARD M52 OD autorisé (score = chemicalProducts / (1 + biologicalProducts)). Préchauffage des requêtes de démo au démarrage (backend/app/warmup.py).
+- Normalisation lourde : la lancer SUR LE SERVEUR (docker exec lpc-api python backend/etl/load_db.py --normalize-db).
+- 09:00 : gel des fonctionnalités backend, sauf "usages retirés réels (Canada)" (limite 10:15).
