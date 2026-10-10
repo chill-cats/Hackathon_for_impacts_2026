@@ -229,7 +229,7 @@ def search_terms_for(texte):
 # ---------------------------------------------------------------------------
 # Produits soeurs (hypothèses à vérifier)
 # ---------------------------------------------------------------------------
-def _entity_of_product(product):
+def entity_of_product(product):
     """Espèce + souche d'un produit, à partir de ses colonnes ou, à défaut, du mapping validé."""
     for field in ("active_entity_original", "active_entity_normalized"):
         found = normalize_active_entity(product.get(field))
@@ -254,7 +254,7 @@ def find_sister_candidates(produits):
     Statut "to_verify" partout, sauf "validated" écrit explicitement dans le mapping.
     """
     candidates = []
-    entities = [(p, _entity_of_product(p)) for p in produits]
+    entities = [(p, entity_of_product(p)) for p in produits]
 
     # 1) Même espèce (et éventuellement même souche) entre deux produits connus
     for i, (a, ea) in enumerate(entities):
