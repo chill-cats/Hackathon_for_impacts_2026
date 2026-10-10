@@ -24,6 +24,8 @@ FROM nginx:alpine
 # Valeur par défaut vide : sans elle, nginx lirait ${API_KEY} comme une variable inconnue et ne démarrerait pas.
 # En Docker Compose, le .env racine (env_file) la remplace.
 ENV API_KEY=""
+# Back vers lequel nginx transmet /api/ (sans /api). Compose le remplace par BACK_URL du .env, ou par http://backend:BACK_PORT.
+ENV BACK_URL="http://backend:3000"
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 # Les fichiers de /etc/nginx/templates sont passés à envsubst au démarrage
 COPY docker/default.conf.template /etc/nginx/templates/default.conf.template

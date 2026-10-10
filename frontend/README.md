@@ -34,6 +34,8 @@ pnpm start
 L'app (<http://localhost:4200>) transmet `/api/...` au back sur `localhost:${BACK_PORT}` (défaut 3000), préfixe compris.
 Le proxy de dev (`proxy.back.mjs`) ajoute `X-API-Key` avec `API_KEY` du `.env` racine : la clé n'est jamais dans le code Angular.
 
+Pour viser le back d'équipe déployé au lieu d'un back local : `BACK_URL=http://64.176.83.254:3000` dans le `.env` racine (`FRONT_API_URL` reste `/api` : le navigateur parle à son propre domaine, pas de CORS). Idem en Docker : `docker compose up -d --build` (front seul) suffit, nginx transmet au back d'équipe.
+
 ### Démo hors ligne (filet de sécurité du pitch)
 
 Dans le `.env` racine : `FRONT_OFFLINE_DEMO=true`, puis `pnpm start` ou `pnpm build`.
@@ -57,6 +59,7 @@ le JavaScript public : n'y mettez jamais de secret.
 | Variable | Rôle |
 |---|---|
 | `FRONT_API_URL` | Base d'URL de l'API vue du navigateur (défaut `/api`). |
+| `BACK_URL` | Où le proxy de dev (`pnpm start`) et nginx (Docker) envoient `/api`, **sans** `/api` à la fin. Vide = back local. Back d'équipe : `http://64.176.83.254:3000`. |
 | `FRONT_MOCK` | `true` = mode mock (en-tête `Prefer`). `pnpm start:mock` l'active tout seul. |
 | `FRONT_OFFLINE_DEMO` | `true` = démo hors ligne. |
 

@@ -11,7 +11,7 @@ server {
   # que nginx plante au démarrage si le back n'est pas (encore) lancé.
   location /api/ {
     resolver 127.0.0.11 valid=10s;
-    set $back_upstream http://backend:${BACK_PORT};
+    set $back_upstream ${BACK_URL};
     proxy_pass $back_upstream;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
