@@ -51,9 +51,7 @@ services:
       - .env                        # injecte TOUTES les variables du .env racine dans le conteneur
     ports:
       - "${BACK_HOST_PORT:-3000}:${BACK_PORT:-3000}"   # accès direct pour tester (optionnel)
-    depends_on:
-      db:
-        condition: service_healthy  # attend que MySQL soit réellement prêt
+    # Pas de depends_on : la base est le PostgreSQL de l'équipe (DATABASE_URL du .env), pas un conteneur ici.
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
@@ -61,8 +59,9 @@ services:
   # Pas de `ports` : seuls les autres conteneurs y accèdent (plus sûr en prod).
   # Pour s'y connecter depuis ta machine, ajouter : ports: ["3306:3306"]
   # ---------------------------------------------------------------------------
+  # Ancien MySQL du starter kit, NON utilisé par le projet (PostgreSQL d'équipe) : profil "mysql", donc jamais lancé par défaut.
   db:
-    profiles: ["backend"]
+    profiles: ["mysql"]
     image: mysql:8.4
     env_file:
       - .env                        # l'image MySQL lit MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD

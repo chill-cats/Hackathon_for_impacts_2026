@@ -15,7 +15,10 @@ const RULES: readonly (readonly [RegExp, MockAskExample])[] = [
   [/s(?:œ|oe)ur|sister/i, 'sister_product'],
   [/source|d['’]o[ùu] vient|provenance/i, 'source_lookup'],
   [/expir|[ée]ch[ée]ance/i, 'expiry_watch'],
-  [/souche|strain|culture|crop|tomate|fraisier|fraise|ingr[ée]dient|substance/i, 'ingredient_search'],
+  [
+    /souche|strain|culture|crop|tomate|fraisier|fraise|ingr[ée]dient|substance|contre|against|quels? produits?|which products?/i,
+    'ingredient_search',
+  ],
 ];
 
 export function guessMockExample(question: string): MockAskExample {

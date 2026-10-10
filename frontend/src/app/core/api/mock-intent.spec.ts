@@ -9,6 +9,8 @@ describe('guessMockExample (mock uniquement)', () => {
     ["D'où vient chaque donnée ? donne la source", 'source_lookup'],
     ['Qu’est-ce qui expire dans 12 mois ?', 'expiry_watch'],
     ['Quels produits avec la souche J1446 sur tomate ?', 'ingredient_search'],
+    ["Quel produit utiliser contre l'oïdium ?", 'ingredient_search'],
+    ['Which product against powdery mildew?', 'ingredient_search'],
     ['Dans quels pays est-il homologué ?', 'registration_lookup'],
     ['lalguard', 'needs_clarification'],
   ])('« %s » → %s', (question, expected) => {
