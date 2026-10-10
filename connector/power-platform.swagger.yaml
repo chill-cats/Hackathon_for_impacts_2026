@@ -10,9 +10,9 @@ info:
     Sourced answers on plant protection product registrations (Lallemand Plant Care hackathon prototype).
     Every value carries its official source, collection date and validation status.
     Regulatory Affairs validation is required.
-host: your-tunnel.ngrok-free.app
+host: 64.176.83.254:3000
 basePath: /api
-schemes: [https]
+schemes: [http]
 consumes: [application/json]
 produces: [application/json]
 securityDefinitions:
