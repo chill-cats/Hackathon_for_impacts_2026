@@ -33,7 +33,10 @@ services:
       args:
         FRONT_API_URL: ${FRONT_API_URL:-/api}
     env_file:
-      - .env                        # nginx y lit BACK_PORT pour rediriger /api vers le back
+      - .env
+    environment:
+      # Où nginx envoie /api : BACK_URL du .env (ex. back d'équipe http://64.176.83.254:3000), sinon le service backend ci-dessous.
+      BACK_URL: ${BACK_URL:-http://backend:${BACK_PORT:-3000}}
     ports:
       - "${FRONT_PORT:-8080}:80"    # "port sur ta machine : port dans le conteneur"
     restart: unless-stopped         # redémarre tout seul après un crash/reboot du serveur

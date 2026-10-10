@@ -14,7 +14,8 @@ const headers = process.env.API_KEY ? { 'X-API-Key': process.env.API_KEY } : {};
 
 export default {
   '/api': {
-    target: `http://localhost:${process.env.BACK_PORT ?? 3000}`,
+    // BACK_URL (sans /api) : back d'équipe ou autre ; à défaut, le back local.
+    target: process.env.BACK_URL || `http://localhost:${process.env.BACK_PORT ?? 3000}`,
     changeOrigin: true,
     headers,
   },
