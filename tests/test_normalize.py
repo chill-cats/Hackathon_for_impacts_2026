@@ -83,3 +83,56 @@ def test_sisters_from_name_mapping_keep_their_status():
     names = {c["product_b"]: c for c in nz.find_sister_candidates(products)}
     assert names["PRESTOP"]["confidence"] == 0.85
     assert names["PRESTOP"]["review_status"] == "to_verify"
+
+
+# --- Dictionnaire de traduction suggéré par l'IA (data/ai_term_mapping.csv) ---------------------
+def test_ai_mapping_same_disease_in_german_and_french():
+    de = nz.normalize_target("Echter Mehltau")
+    fr = nz.normalize_target("Oïdium(s)")
+    assert de["normalized"] == fr["normalized"] == "Powdery mildew"
+    assert nz.normalize_target("Echte Mehltaupilze")["normalized"] == "Powdery mildew"   # forme publiée par le BVL
+    assert de["method"] == fr["method"] == "ai_suggested"
+    assert de["mapping_status"] == "ai_suggested"
+    assert de["group"] == fr["group"] == "Powdery mildews"
+
+
+def test_ai_mapping_unknown_value_returns_none():
+    assert nz.normalize_crop("Plante imaginaire xyzzy") is None
+    assert nz.normalize_target("Ravageur imaginaire xyzzy") is None
+
+
+def test_ai_mapping_never_invents_eppo_code():
+    found = nz.normalize_crop("Zierpflanzen")
+    assert found["normalized"] == "Ornamental plants"
+    assert found["eppo_code"] is None   # catégorie large : pas de code EPPO
+    assert found["group"] == "Ornamentals"
+
+
+def test_ai_mapping_keeps_review_info():
+    found = nz.normalize_crop("Zierpflanzen")
+    assert found["review_status"] == "to_verify"
+    assert found["model_name"] and found["confidence"] is not None
+
+
+def test_ai_mapping_composite_value():
+    assert nz.normalize_crop("Tomate - Aubergine")["normalized"] == "Tomato; Eggplant"
+
+
+def test_lpc_mapping_has_priority_over_ai_mapping(monkeypatch):
+    # on fabrique une ligne IA qui contredit le mapping LPC pour "Tomate" : le résultat LPC doit rester
+    fake = {("crop", nz.clean("Tomate")): {
+        "kind": "crop", "value_original": "Tomate", "normalized_en": "WRONG", "group_en": "WRONG",
+        "eppo_code_candidate": "XXXXX", "confidence": "0.9", "method": "ai_suggested",
+        "model_name": "test", "review_status": "to_verify"}}
+    monkeypatch.setattr(nz, "_load_ai_index", lambda: fake)
+    found = nz.normalize_crop("Tomate")
+    assert found["method"] == "lpc_mapping"
+    assert found["eppo_code"] == "LYPES" and found["normalized"] == "Tomato"
+
+
+def test_ai_mapping_validated_row_becomes_validated(monkeypatch):
+    row = {"kind": "crop", "value_original": "Foo", "normalized_en": "Foo crop", "group_en": "Bar",
+           "eppo_code_candidate": "", "confidence": "0.9", "method": "ai_suggested",
+           "model_name": "test", "review_status": "validated"}
+    monkeypatch.setattr(nz, "_load_ai_index", lambda: {("crop", "foo"): row})
+    assert nz.normalize_crop("Foo")["mapping_status"] == "validated"

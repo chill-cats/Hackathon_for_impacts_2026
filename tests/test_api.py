@@ -53,6 +53,10 @@ def test_search_prestop_finds_france_and_canada(client):
 
 
 def test_synthetic_data_hidden_unless_requested(client):
+    from backend.app.db import query
+    # Ce test s'appuie sur les produits fictifs P-TEST-* : sans eux en base (rechargé avec --no-test), on ignore.
+    if not query("SELECT 1 FROM products WHERE is_synthetic AND commercial_name ILIKE '%TEST%' LIMIT 1"):
+        pytest.skip("aucun produit fictif TEST en base : rien à masquer")
     default = client.get("/api/products", params={"q": "TEST"}).json()["items"]
     assert not any(i["isSynthetic"] for i in default)
     shown = client.get("/api/products", params={"q": "TEST GLIOCLADIUM", "includeSynthetic": "true"}).json()["items"]

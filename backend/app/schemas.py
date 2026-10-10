@@ -9,7 +9,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from .models import Answer, AnswerGenerator, CountryCoverage, MatchedVia, Product, Registration, SourceInfo
+from .models import (Answer, AnswerGenerator, ComparisonResponse, ComparisonRow, CountryCoverage, MatchedVia, Product,
+                     Registration, SourceInfo)
 
 
 class HealthResponse(BaseModel):
@@ -20,6 +21,18 @@ class ProductOut(Product):
     """Product du contrat + `matchedVia` (AJOUT optionnel demandé pour la recherche : par quel nom,
     alias ou substance active le produit a été trouvé). Propose d'ajouter ce champ au contrat."""
     matchedVia: MatchedVia | None = None
+
+
+class ComparisonRowOut(ComparisonRow):
+    """ComparisonRow du contrat + `cropGroup` / `targetGroup` (AJOUT optionnel : catégorie large suggérée par l'IA,
+    ex. "Powdery mildews", "Cereals", à vérifier). Propose d'ajouter ces champs au contrat."""
+    cropGroup: str | None = None
+    targetGroup: str | None = None
+
+
+class ComparisonResponseOut(ComparisonResponse):
+    """ComparisonResponse du contrat, avec des lignes enrichies de cropGroup / targetGroup."""
+    rows: list[ComparisonRowOut] | None = None
 
 
 class ProductsResponse(BaseModel):

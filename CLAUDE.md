@@ -71,7 +71,7 @@ Windows / PowerShell, Python 3.11+, venv .venv. Équipe débutante : code simple
 - Adaptateurs : backend/etl/adapters/france/ (Nhan), germany/ (Hanane), canada/ (Dyland) ; chacun a son propre base.py ; ils écrivent directement en base.
 - Base partagée réinitialisée à 03:14 puis rechargée : FR-EPHY (~13 500 homologations), DE-BVL (~2 100), CA-PPID (5, uniquement produits contenant nos ingrédients). AUCUNE donnée de test en base (rechargé avec --no-test).
 - product_aliases.related_product_id existe : lien EXACT vers le produit sœur ; ne JAMAIS joindre produits et sœurs par le nom.
-- Normalisation : mappings LPC trop petits (33/608 cultures, 10/896 cibles reconnues) → dictionnaire IA data/ai_term_mapping.csv en cours (method "ai_suggested", review_status "to_verify").
+- Normalisation : mappings LPC trop petits → dictionnaire IA data/ai_term_mapping.csv (400 valeurs FR/DE → normalized_en + group_en, method "ai_suggested", review_status "to_verify"), utilisé par normalize.py en second recours (LPC prioritaire). Après `--normalize-db` : lignes normalisées cultures 25 % → 94 %, cibles 3 % → 92 %. group_en est dans field_evidence (crop_group / target_group) et exposé par /compare (cropGroup / targetGroup, hors contrat, à reporter par Damien). Voir docs/ai_term_mapping.md.
 - Pas de date d'expiration côté FR : utiliser status_normalized = withdrawn.
 - ⚠️ Ne JAMAIS exécuter db/schema.sql ni db/reset_DANGER.sql sur la base partagée. Aucun DELETE/DROP/TRUNCATE.
 - Frontend : Damien travaille sur une branche séparée, fusion dans main prévue avant 11:00.

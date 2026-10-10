@@ -544,10 +544,15 @@ def match_registrations(ref, profile, countries, include_synthetic, cap=1000):
     return matched, truncated
 
 
-def mapping_status(original, code, status):
-    """cropMappingStatus / targetMappingStatus : validated, to_verify ou unmapped (None si rien à dire)."""
+def mapping_status(original, code, status, normalized=None):
+    """cropMappingStatus / targetMappingStatus : validated, to_verify ou unmapped (None si rien à dire).
+
+    Un nom normalisé sans code EPPO vient du dictionnaire IA (hypothèse à vérifier) : to_verify, pas unmapped.
+    """
     if code:
         return as_enum(status, m.MappingStatus) or "to_verify"
+    if normalized:
+        return "to_verify"
     return "unmapped" if original else None
 
 
@@ -611,9 +616,10 @@ def fetch_uses(regs_by_id, include_synthetic, crop=None, target=None, cap=5000, 
             "isSynthetic": bool(u["is_synthetic"] or reg["is_synthetic"]),
             "evidence": build_evidence(f"use:{u['use_id']}", reg, validation_status=u["validation_status"]),
         }
-        for key, original, code, status in (("cropMappingStatus", u["crop_name_original"], u["eppo_crop_code"], u["crop_ms"]),
-                                            ("targetMappingStatus", u["target_name_original"], u["eppo_target_code"], u["target_ms"])):
-            value = mapping_status(original, code, status)
+        for key, original, code, status, normalized in (
+                ("cropMappingStatus", u["crop_name_original"], u["eppo_crop_code"], u["crop_ms"], u["crop_name_normalized"]),
+                ("targetMappingStatus", u["target_name_original"], u["eppo_target_code"], u["target_ms"], u["target_name_normalized"])):
+            value = mapping_status(original, code, status, normalized)
             if value:
                 use[key] = value
         out.setdefault(u["registration_id"], []).append(use)
@@ -726,6 +732,20 @@ def row_key(use):
     return f"{ck}:{c}|{tk}:{t}"
 
 
+def term_groups(use_ids):
+    """{(use_id, "crop_group" | "target_group"): groupe} lu dans field_evidence (regroupement suggéré par l'IA).
+
+    Le groupe (ex. "Powdery mildews") n'a pas de colonne dédiée : il est dans excerpt, sous la forme "group_en=...".
+    """
+    if not use_ids:
+        return {}
+    rows = query("""SELECT entity_id, field_name, excerpt FROM field_evidence
+                    WHERE entity_type = 'use' AND field_name IN ('crop_group', 'target_group')
+                      AND entity_id = ANY(CAST(:ids AS text[]))""", {"ids": list(use_ids)})
+    return {(r["entity_id"], r["field_name"]): r["excerpt"].removeprefix("group_en=")
+            for r in rows if r["excerpt"] and r["excerpt"].startswith("group_en=")}
+
+
 def compare_uses(product_id, countries, crop, target, include_synthetic, limit, offset):
     """GET /compare : lignes alignées par EPPO, une cellule par pays, jamais de mélange entre pays."""
     ref, rows = load_reference(product_id)
@@ -741,13 +761,17 @@ def compare_uses(product_id, countries, crop, target, include_synthetic, limit, 
     outcome = {c["countryCode"]: c["outcome"] for c in coverage}
 
     # Lignes : clé -> {libellés, cellules par pays}
+    groups = term_groups([use["useId"] for use_list in uses.values() for use in use_list])
     rows = {}
     for rid, use_list in uses.items():
         cc = regs_by_id[rid]["country_code"]
         for use in use_list:
             row = rows.setdefault(row_key(use), {
                 "cropNormalized": use["cropNormalized"], "eppoCropCode": use["eppoCropCode"],
-                "targetNormalized": use["targetNormalized"], "eppoTargetCode": use["eppoTargetCode"], "by_country": {}})
+                "targetNormalized": use["targetNormalized"], "eppoTargetCode": use["eppoTargetCode"],
+                "cropGroup": None, "targetGroup": None, "by_country": {}})
+            for key, field in (("cropGroup", "crop_group"), ("targetGroup", "target_group")):
+                row[key] = row[key] or groups.get((use["useId"], field))
             row["by_country"].setdefault(cc, {"registrationId": rid, "uses": []})["uses"].append(use)
 
     out_rows = []
@@ -770,6 +794,7 @@ def compare_uses(product_id, countries, crop, target, include_synthetic, limit, 
         out_rows.append({
             "rowId": key, "cropNormalized": row["cropNormalized"], "eppoCropCode": row["eppoCropCode"],
             "targetNormalized": row["targetNormalized"], "eppoTargetCode": row["eppoTargetCode"],
+            "cropGroup": row["cropGroup"], "targetGroup": row["targetGroup"],
             "differsAcrossCountries": not_everywhere or doses_differ, "cells": cells})
 
     # registrations[] : 50 usages au plus par homologation (le détail complet est dans rows[].cells[].uses)

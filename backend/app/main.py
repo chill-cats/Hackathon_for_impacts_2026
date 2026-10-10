@@ -165,7 +165,7 @@ def getSisterCandidates(productId: str, includeSynthetic: bool = Query(False)):
     return services.sister_candidates(productId, includeSynthetic)
 
 
-@secured.get("/compare", tags=["comparison"], response_model=m.ComparisonResponse, response_model_exclude_unset=True,
+@secured.get("/compare", tags=["comparison"], response_model=s.ComparisonResponseOut, response_model_exclude_unset=True,
              responses={200: {"content": {"text/csv": {}}}, 401: PROBLEM, 404: PROBLEM},
              summary="Compare authorized uses across countries")
 def compareProductUses(
