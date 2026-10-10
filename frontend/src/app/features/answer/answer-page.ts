@@ -9,8 +9,11 @@ import type { SuggestedQuestion } from '../../core/api/models';
 import { I18n, type MessageKey } from '../../core/i18n/i18n';
 import { AnswerStore } from '../../core/state/answer.store';
 import { EvidencePanel } from '../../shared/evidence-panel';
+import { AppFooter } from './app-footer';
 import { AppHeader } from './app-header';
 import { AskBar } from './ask-bar';
+import { Hero } from './hero';
+import { ThinkingStatus } from './thinking-status';
 import { Conclusion } from './conclusion';
 import { SearchScope } from './search-scope';
 import { Understood } from './understood';
@@ -46,6 +49,9 @@ type TemplateKind =
     HlmButtonImports,
     HlmSkeletonImports,
     AppHeader,
+    AppFooter,
+    Hero,
+    ThinkingStatus,
     AskBar,
     Understood,
     Conclusion,
@@ -63,20 +69,20 @@ type TemplateKind =
   template: `
     <app-header />
 
-    <main class="mx-auto flex max-w-6xl flex-col gap-6 px-6 pt-8 pb-12">
-      <h1 class="type-display-l">{{ i18n.t('page.title') }}</h1>
+    <!-- Accueil : le hero vidéo n'apparaît que tant qu'aucune question n'est posée -->
+    @if (store.status() === 'idle') {
+      <app-hero />
+    }
 
-      <app-ask-bar />
+    <main class="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12" [class.pt-8]="store.status() !== 'idle'">
+      <div class="relative z-10 w-full" [class.-mt-8]="store.status() === 'idle'">
+        <app-ask-bar />
+      </div>
 
       @switch (store.status()) {
         @case ('loading') {
           <section class="flex flex-col gap-3" role="status" aria-busy="true" data-state="loading">
-            <p class="text-ink-muted text-sm">
-              {{ i18n.t('state.loading') }}
-              @if (sourceNames()) {
-                <span class="type-code-sm text-ink-strong">{{ sourceNames() }}</span>
-              }
-            </p>
+            <app-thinking-status [sources]="sourceNames()" />
             <div hlmSkeleton class="h-7 w-3/4"></div>
             <div hlmSkeleton class="h-5 w-1/2"></div>
             <div hlmSkeleton class="h-40 w-full"></div>
@@ -173,22 +179,8 @@ type TemplateKind =
       }
     </main>
 
-    <!-- Pied : le disclaimer est toujours présent -->
-    <footer class="border-line border-t">
-      <div class="mx-auto flex max-w-6xl flex-col gap-1 px-6 py-4">
-        <div hlmAlert data-section="disclaimer">
-          <ng-icon name="lucideInfo" aria-hidden="true" />
-          <p hlmAlertDescription>
-            @if (store.answer(); as answer) {
-              {{ answer.disclaimer }}
-              <span class="block">{{ i18n.t('footer.disclaimer') }}</span>
-            } @else {
-              {{ i18n.t('footer.disclaimer') }}
-            }
-          </p>
-        </div>
-      </div>
-    </footer>
+    <!-- Pied : le disclaimer est toujours présent, avec la fraîcheur des sources -->
+    <app-footer />
 
     <app-evidence-panel />
   `,

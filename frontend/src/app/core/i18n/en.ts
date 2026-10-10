@@ -3,13 +3,15 @@ import type { MessageKey } from './fr';
 
 export const EN: Record<MessageKey, string> = {
   // --- Page and question bar
-  'page.title': 'Ask a regulatory question',
+  'page.title': 'Ask something',
+  'page.subtitle': 'product, substance, crop, target...',
   'ask.label': 'Your question',
   'ask.placeholder': 'E.g.: In which countries is LALGUARD M52 OD registered?',
   'ask.submit': 'Ask',
-  'ask.examples': 'Test questions (click to ask)',
+  'ask.examples': 'Example questions',
 
-  // --- Header
+  // --- Header and footer
+  'header.tagline': 'Registration watch · Lallemand Plant Care',
   'header.freshness': 'Source freshness',
   'header.language': 'Language',
   'header.frozen': 'frozen extract',
@@ -47,9 +49,17 @@ export const EN: Record<MessageKey, string> = {
   'follow.heading': 'Keep going',
   'footer.disclaimer':
     'Proof of concept, not an official regulatory system. An empty result never proves the absence of a registration. Official decisions prevail.',
+  'footer.videoCredit': 'Background videos: Mixkit',
 
   // --- Page states
   'state.loading': 'Querying the sources…',
+  'thinking.read': 'Reading your question…',
+  'thinking.entities': 'Identifying the product, substance and countries…',
+  'thinking.sources': 'Searching the official databases (E-Phy, BVL, PPID)…',
+  'thinking.eppo': 'Aligning crops and targets (EPPO codes)…',
+  'thinking.compare': 'Comparing registrations country by country…',
+  'thinking.verify': 'Checking sources and citations…',
+  'thinking.write': 'Writing the answer…',
   'state.retry': 'Try again',
   'error.network': 'The service is not responding',
   'error.network.body': 'Check your connection, then try again. Your question is kept.',

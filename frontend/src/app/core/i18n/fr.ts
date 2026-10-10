@@ -2,13 +2,15 @@
 // Les {paramètres} sont remplacés par I18n.t(). Chaque clé doit exister dans en.ts (le compilateur le vérifie).
 export const FR = {
   // --- Page et barre de question
-  'page.title': 'Poser une question réglementaire',
+  'page.title': 'Poser une question',
+  'page.subtitle': 'produit, substance, culture, cible... ',
   'ask.label': 'Votre question',
   'ask.placeholder': 'Ex. : Dans quels pays LALGUARD M52 OD est-il homologué ?',
   'ask.submit': 'Demander',
-  'ask.examples': 'Questions test (cliquez pour poser la question)',
+  'ask.examples': "Questions d'exemple",
 
-  // --- En-tête
+  // --- En-tête et pied de page
+  'header.tagline': 'Veille homologations · Lallemand Plant Care',
   'header.freshness': 'Fraîcheur des sources',
   'header.language': 'Langue',
   'header.frozen': 'extrait figé',
@@ -46,9 +48,18 @@ export const FR = {
   'follow.heading': 'Pour continuer',
   'footer.disclaimer':
     "Preuve de concept, pas un système réglementaire officiel. Un résultat vide ne prouve jamais l'absence d'homologation. Les décisions officielles prévalent.",
+  'footer.videoCredit': "Vidéos d'accueil : Mixkit",
 
   // --- États de la page
   'state.loading': 'Interrogation des sources en cours…',
+  // Textes d'ambiance pendant le chargement (thinking-status.ts), affichés l'un après l'autre
+  'thinking.read': 'Lecture de votre question…',
+  'thinking.entities': 'Repérage du produit, de la substance et des pays…',
+  'thinking.sources': 'Recherche dans les bases officielles (E-Phy, BVL, PPID)…',
+  'thinking.eppo': 'Alignement des cultures et des cibles (codes EPPO)…',
+  'thinking.compare': 'Comparaison des homologations pays par pays…',
+  'thinking.verify': 'Vérification des sources et des citations…',
+  'thinking.write': 'Rédaction de la réponse…',
   'state.retry': 'Réessayer',
   'error.network': 'Le service ne répond pas',
   'error.network.body': 'Vérifiez votre connexion, puis réessayez. Votre question est conservée.',

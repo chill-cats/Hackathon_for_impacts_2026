@@ -8,24 +8,24 @@ import { DEMO_QUESTIONS } from '../../core/state/demo-questions';
 
 /**
  * Bloc 2 : la barre de question (un seul champ). Vide et sans réponse, elle propose les 5 questions test
- * du jury en exemples cliquables : la démo T01 → T05 se déroule sans rien taper.
+ * du jury en pastilles d'exemple cliquables : la démo T01 → T05 se déroule sans rien taper.
  */
 @Component({
   selector: 'app-ask-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgIcon, HlmButtonImports, HlmLabelImports],
   template: `
-    <form class="flex flex-col gap-3" (submit)="$event.preventDefault(); submit()">
+    <form class="mx-auto flex w-full max-w-3xl flex-col gap-3 [view-transition-name:ask-bar]" (submit)="$event.preventDefault(); submit()">
       <label hlmLabel for="question" class="sr-only">{{ i18n.t('ask.label') }}</label>
       <div
-        class="border-input bg-surface focus-within:outline-focus flex items-center gap-2 rounded-md border py-1 pr-1 pl-3 focus-within:outline-2 focus-within:outline-offset-2"
+        class="border-input bg-surface focus-within:outline-focus flex items-center gap-2 rounded-lg border py-1.5 pr-1.5 pl-4 shadow-md focus-within:outline-2 focus-within:outline-offset-2"
       >
-        <ng-icon name="lucideSearch" class="text-ink-muted text-base" aria-hidden="true" />
+        <ng-icon name="lucideSearch" class="text-ink-muted text-lg" aria-hidden="true" />
         <input
           id="question"
           name="question"
           autocomplete="off"
-          class="text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent py-1.5 text-base outline-none"
+          class="text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent py-2 text-base outline-none"
           [placeholder]="i18n.t('ask.placeholder')"
           [value]="text()"
           (input)="text.set($any($event.target).value)"
@@ -38,27 +38,23 @@ import { DEMO_QUESTIONS } from '../../core/state/demo-questions';
     </form>
 
     @if (store.status() === 'idle' && text().trim().length === 0) {
-      <div class="mt-3 flex flex-col gap-2" data-examples>
-        <span class="type-caption text-ink-muted">{{ i18n.t('ask.examples') }}</span>
-        <ul class="flex flex-col gap-2">
-          @for (q of questions; track q.test) {
-            <li>
-              <button
-                hlmBtn
-                variant="secondary"
-                size="sm"
-                type="button"
-                class="h-auto max-w-full justify-start py-1.5 text-left whitespace-normal"
-                [attr.data-intent]="q.intent"
-                (click)="ask(q.question[i18n.lang()], q.intent)"
-              >
-                <span class="type-code-sm text-ink-muted">{{ q.test }}</span>
-                {{ q.question[i18n.lang()] }}
-              </button>
-            </li>
-          }
-        </ul>
-      </div>
+      <ul class="mx-auto mt-4 flex max-w-5xl flex-row flex-wrap justify-center gap-2" data-examples [attr.aria-label]="i18n.t('ask.examples')">
+        @for (q of questions; track q.test) {
+          <li>
+            <button
+              hlmBtn
+              variant="outline"
+              size="sm"
+              type="button"
+              class="h-auto max-w-full rounded-full py-1.5 text-left whitespace-normal"
+              [attr.data-intent]="q.intent"
+              (click)="ask(q.question[i18n.lang()], q.intent)"
+            >
+              {{ q.question[i18n.lang()] }}
+            </button>
+          </li>
+        }
+      </ul>
     }
   `,
 })

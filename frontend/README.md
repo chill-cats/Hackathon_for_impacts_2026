@@ -1,4 +1,4 @@
-# Frontend : LPC Regulatory Watch
+# Frontend : Sporadar (veille homologations LPC)
 
 Application Angular 22 (composants standalone, signals), Tailwind 4, Spartan NG, Vitest, pnpm.
 Une seule page : on pose une question réglementaire, la réponse choisit son gabarit selon l'`intent`
