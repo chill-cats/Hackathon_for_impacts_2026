@@ -51,3 +51,13 @@ Ne pas toucher frontend/ (sauf demande explicite). Ne pas modifier les fichiers 
 
 ## Environnement
 Windows / PowerShell, Python 3.11+, venv .venv. Équipe débutante : code simple, commenté, expliqué.
+
+## État actuel (mis à jour 03:00)
+- Contrat API de référence : openapi.proposed.yaml (v0.2.1, Damien), expliqué dans docs/openapi-changes.md. schema/openapi.yaml = contrat d'origine, compatible, ne pas modifier.
+- API faite : backend/app/ (main.py, services.py, db.py lecture seule, models.py GÉNÉRÉ par datamodel-codegen, schemas.py). Lancement : uvicorn backend.app.main:app --port 3000. Tests : tests/test_api.py.
+- ETL fait : backend/etl/normalize.py et load_db.py (--normalize-db pour normaliser les lignes déjà en base). Schéma réel : docs/db_schema.md.
+- Base partagée : données réelles FR-EPHY (~13 500 produits), CA-PPID, DE-BVL. Données de test = is_synthetic=true (P-TEST-*), masquées par défaut.
+- Adaptateurs des coéquipiers : backend/etl/adapters/ (base.py commun, fr_ephy.py, ca_ppid.py, de_bvl.py), écrivent directement en base.
+- product_aliases.related_product_id (migration db/migrations/001_…) : lien EXACT vers le produit sœur ; ne JAMAIS joindre produits et sœurs par le nom.
+- Pas de date d'expiration côté FR : utiliser status_normalized = withdrawn.
+- Pas encore de clé IA : tout doit marcher en mode sans clé (mots-clés).
