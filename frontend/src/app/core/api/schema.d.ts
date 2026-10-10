@@ -286,6 +286,8 @@ export interface components {
             validationStatus?: components["schemas"]["ValidationStatus"];
             /** @description Known product names and active-entity names (internal LPC mapping files). */
             aliases?: components["schemas"]["ProductAlias"][];
+            /** @description Only present on search results (GET /products): by which name, alias or active entity the product was found. Shown so users see when a match relies on an alias still to verify. */
+            matchedVia?: components["schemas"]["MatchedVia"];
         };
         Evidence: {
             /** @description Stable id so facts can point to their evidence, built from the stored row: registration:{registration_id}, use:{use_id} or field:{field_evidence.evidence_id}. */
@@ -603,6 +605,11 @@ export interface components {
         AnswerGenerator: {
             provider?: string;
             model?: string;
+            /**
+             * @description llm = the AI wrote the sentence (every figure and citation is checked by code); keyword = degraded mode without AI key (keyword understanding, template sentence).
+             * @enum {string}
+             */
+            mode?: "llm" | "keyword";
         };
         ReviewRequest: {
             /** @enum {string} */

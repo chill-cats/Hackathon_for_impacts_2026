@@ -196,6 +196,9 @@ export const EN: Record<MessageKey, string> = {
   'matrix.competitor': 'competitor',
   'matrix.sister': 'sister?',
   'matrix.formerName': 'former name: {name}',
+  'matrix.foundVia': 'found via “{name}”',
+  'conclusion.mode.keyword': 'no-AI-key mode',
+  'conclusion.mode.llm': 'written by AI, figures and citations checked',
 
   // --- expiry_watch
   'expiry.caption': 'Registrations expiring soon',

@@ -1,13 +1,14 @@
 openapi: 3.1.0
 info:
   title: LPC Global Regulatory AI API
-  version: 0.2.1
+  version: 0.2.2
   description: |
     Hackathon contract for the Lallemand Plant Care regulatory intelligence agent.
 
     Extends the starter-kit contract (v0.1.0) without breaking it: every original
     route, field and required list is kept; everything new is optional or a new route.
     See docs/openapi-changes.md for what changed, why, and what it means for the backend.
+    v0.2.2: adds the optional Product.matchedVia (search results) and AnswerGenerator.mode, already returned by the backend.
     v0.2.1: aligned on the team PostgreSQL schema (db/schema.sql); no new column or table is needed.
     Mock examples (synthetic, one per question type and per route) live in mocks/examples.yaml.
     Prism serves them: `prism mock openapi.proposed.yaml`, pick one with the header `Prefer: example=<name>`.
@@ -450,6 +451,9 @@ components:
           type: array
           description: Known product names and active-entity names (internal LPC mapping files).
           items: {$ref: '#/components/schemas/ProductAlias'}
+        matchedVia:
+          description: 'Only present on search results (GET /products): by which name, alias or active entity the product was found. Shown so users see when a match relies on an alias still to verify.'
+          $ref: '#/components/schemas/MatchedVia'
     Evidence:
       type: object
       required: [sourceId, sourceUrl, collectedAt, validationStatus]
@@ -817,6 +821,10 @@ components:
       properties:
         provider: {type: string}
         model: {type: string}
+        mode:
+          type: string
+          enum: [llm, keyword]
+          description: 'llm = the AI wrote the sentence (every figure and citation is checked by code); keyword = degraded mode without AI key (keyword understanding, template sentence).'
     ReviewRequest:
       type: object
       required: [targetType, targetId, decision]

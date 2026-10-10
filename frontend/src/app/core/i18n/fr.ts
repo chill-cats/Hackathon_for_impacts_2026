@@ -196,6 +196,9 @@ export const FR = {
   'matrix.competitor': 'concurrent',
   'matrix.sister': 'sœur ?',
   'matrix.formerName': 'ancien nom : {name}',
+  'matrix.foundVia': 'trouvé via « {name} »',
+  'conclusion.mode.keyword': 'mode sans clé IA',
+  'conclusion.mode.llm': 'rédigé par IA, chiffres et citations vérifiés',
 
   // --- expiry_watch
   'expiry.caption': 'Homologations qui expirent bientôt',

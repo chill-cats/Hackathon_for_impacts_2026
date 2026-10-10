@@ -49,6 +49,14 @@ import { StatusBadge, type BadgeState } from '../../../shared/status-badge';
                 @if (match.product.activeEntityOriginal) {
                   <div class="text-ink-muted text-xs">« {{ match.product.activeEntityOriginal }} »</div>
                 }
+                @if (match.product.matchedVia; as via) {
+                  <div class="text-ink-muted text-xs" data-matched-via>
+                    {{ i18n.t('matrix.foundVia', { name: via.matchedName }) }}
+                    @if (via.aliasReviewStatus && via.aliasReviewStatus !== 'validated') {
+                      <app-status-badge [state]="via.aliasReviewStatus" />
+                    }
+                  </div>
+                }
                 @for (former of formerNames(match); track former) {
                   <div class="text-ink-muted text-xs">{{ i18n.t('matrix.formerName', { name: former }) }}</div>
                 }

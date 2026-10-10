@@ -47,7 +47,12 @@ const ORDER: BadgeState[] = [
         }
       </ul>
       @if (answer().generator; as generator) {
-        <p class="text-ink-muted text-xs">{{ i18n.t('conclusion.generator', { provider: generator.provider ?? '—', model: generator.model ?? '—' }) }}</p>
+        <p class="text-ink-muted text-xs" data-generator>
+          {{ i18n.t('conclusion.generator', { provider: generator.provider ?? '—', model: generator.model ?? '—' }) }}
+          @if (generator.mode; as mode) {
+            · {{ i18n.t(mode === 'llm' ? 'conclusion.mode.llm' : 'conclusion.mode.keyword') }}
+          }
+        </p>
       }
     </section>
   `,
