@@ -78,3 +78,4 @@ Windows / PowerShell, Python 3.11+, venv .venv. Équipe débutante : code simple
 
 - IA : fournisseur Groq configuré dans .env (AI_PROVIDER=groq, AI_BASE_URL, AI_MODEL) → /ask en mode "llm" ; sans clé → mode "keyword".
 - Frontend Angular fusionné dans main (branche frontend de Damien). /compare expose cropGroup/targetGroup (hors contrat, à reporter par Damien).
+- Groq gratuit = limites de débit : llm.py fait des nouvelles tentatives + modèle de secours AI_FALLBACK_MODEL + cache ; si tout échoue → mode keyword (jamais de plantage).
