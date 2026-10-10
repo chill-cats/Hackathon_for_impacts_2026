@@ -449,6 +449,29 @@ def test_llm_client_never_raises(monkeypatch):
     assert llm.complete("s", "u", json_mode=True) is None
 
 
+def test_ask_falls_back_to_keyword_when_openai_module_is_missing(monkeypatch):
+    """Clé IA configurée mais SDK openai absent (image Docker incomplète) : /ask répond 200 en mode keyword, jamais 500."""
+    import sys
+
+    from fastapi.testclient import TestClient
+
+    from backend.app.main import app
+    fake = FakeServices()
+    for name in ("product_registrations", "get_product", "search_products"):
+        monkeypatch.setattr(services, name, getattr(fake, name))
+    monkeypatch.setenv("API_KEY", "")
+    monkeypatch.setenv("AI_API_KEY", "cle-de-test")
+    monkeypatch.setenv("AI_MODEL", "un-modele")
+    monkeypatch.setenv("AI_FALLBACK_MODEL", "")
+    monkeypatch.setitem(sys.modules, "openai", None)   # `from openai import OpenAI` lève alors ImportError
+    llm._client.cache_clear()
+    llm._cache.clear()
+    assert llm.is_configured()
+    response = TestClient(app).post("/api/ask", json={"question": "Dans quels pays LALSTOP G46 est-il homologué ?"})
+    assert response.status_code == 200, response.text
+    assert response.json()["generator"]["mode"] == "keyword"
+
+
 def test_ask_route_matches_the_contract(monkeypatch, no_ai):
     from fastapi.testclient import TestClient
 

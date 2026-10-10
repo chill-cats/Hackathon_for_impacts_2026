@@ -97,7 +97,11 @@ def _call_model(model, system, user, json_mode):
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
     if json_mode:
         args["response_format"] = {"type": "json_object"}
-    client = _client(_env("AI_API_KEY"), _env("AI_BASE_URL"))
+    try:
+        client = _client(_env("AI_API_KEY"), _env("AI_BASE_URL"))
+    except Exception as error:   # noqa: BLE001 - SDK absent ou configuration invalide : mode keyword, jamais de 500
+        log.warning("Client IA indisponible (%s) : repli sur le mode keyword.", type(error).__name__)
+        return None
     for attempt in range(len(RETRY_WAITS) + 1):
         remaining = _state.deadline - time.monotonic()
         if remaining <= 0:
