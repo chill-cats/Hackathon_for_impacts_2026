@@ -17,7 +17,7 @@ from backend.app import models as m
 from backend.app import services
 
 DISCLAIMER = services.DISCLAIMER
-SAFE_US = "Aucun résultat dans les sources intégrées pour US"
+NOT_COVERED_US = "US : marché non couvert par le prototype (aucune source officielle intégrée)."
 
 
 # ---------------------------------------------------------------------------
@@ -206,8 +206,7 @@ def test_keyword_mode_countries_of_g46(backend, no_ai):
 
 def test_country_without_data_gets_the_safe_phrase(backend, no_ai):
     answer = ask("LALSTOP G46 est-il homologué aux États-Unis ?")
-    assert SAFE_US in answer["answer"]
-    assert "preuve d'absence" in answer["answer"]
+    assert NOT_COVERED_US in answer["answer"]
     assert "non homologué" not in answer["answer"].lower()
     assert [c["outcome"] for c in answer["coverage"]][0] in ("not_covered", "not_found", "source_unavailable")
     assert answer["answerStatus"] == "no_data"
@@ -327,7 +326,7 @@ def test_llm_absence_claim_is_replaced_by_the_safe_phrase(backend, fake_ai):
     fake_ai(lambda p: f"LALSTOP G46 WG est homologué [{first_evidence_id(p)}]. Il n'est pas homologué aux États-Unis.")
     answer = ask("Dans quels pays LALSTOP G46 est-il homologué aux États-Unis, en France ?", countries=["US", "FR"])
     text = answer["answer"]
-    assert SAFE_US in text
+    assert NOT_COVERED_US in text
     assert "pas homologué" not in text.lower()
     assert answer["generator"]["mode"] == "llm"
 
@@ -404,8 +403,8 @@ def test_verify_blocks_invented_numbers_and_unknown_ids(text):
 def test_verify_replaces_absence_claims_for_countries_without_result(claim):
     text, warnings, blocked = verify(claim)
     assert not blocked
-    assert text.startswith("Aucun résultat dans les sources intégrées pour ")
-    assert "ce n'est pas une preuve d'absence d'homologation" in text
+    # DE = not_found -> « Aucun résultat… » ; US = not_covered -> « marché non couvert »
+    assert text.startswith("Aucun résultat dans les sources intégrées pour ") or "marché non couvert par le prototype" in text
     assert "non homologué" not in text.lower()
 
 
@@ -467,3 +466,140 @@ def test_ask_route_matches_the_contract(monkeypatch, no_ai):
         assert body["answer"] and body["facts"] and body["coverage"] and body["disclaimer"] == DISCLAIMER
         assert body["generator"]["mode"] == "keyword"
     assert client.post("/api/ask", json={"question": "a"}).status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Fiabilisation : retry / secours / cache, réponse courte, couverture, alignement
+# ---------------------------------------------------------------------------
+class RateLimited(Exception):
+    status_code = 429
+
+
+def reply(text):
+    """Réponse factice au format du SDK OpenAI."""
+    message = type("M", (), {"content": text})
+    return type("R", (), {"choices": [type("C", (), {"message": message})]})
+
+
+def fake_client(outcomes, calls):
+    """Faux client OpenAI : chaque appel consomme une issue (exception à lever, ou texte à renvoyer)."""
+    class Client:
+        class chat:   # noqa: N801
+            class completions:   # noqa: N801
+                @staticmethod
+                def create(**kwargs):
+                    calls.append(kwargs["model"])
+                    outcome = outcomes.pop(0)
+                    if isinstance(outcome, Exception):
+                        raise outcome
+                    return reply(outcome)
+    return Client
+
+
+@pytest.fixture
+def real_llm(monkeypatch):
+    """Vrai llm.complete avec faux client, sans attente réelle ; renvoie la liste des attentes demandées."""
+    waits = []
+    monkeypatch.setenv("AI_API_KEY", "cle-de-test")
+    monkeypatch.setenv("AI_MODEL", "principal")
+    monkeypatch.setenv("AI_FALLBACK_MODEL", "secours")
+    monkeypatch.setattr(llm.time, "sleep", waits.append)
+    llm._cache.clear()
+    llm.start_question()
+    return waits
+
+
+def test_llm_retries_after_rate_limit_then_succeeds(monkeypatch, real_llm):
+    calls = []
+    client = fake_client([RateLimited(), "bonjour"], calls)
+    monkeypatch.setattr(llm, "_client", lambda key, url: client)
+    assert llm.complete("s", "u") == "bonjour"
+    assert calls == ["principal", "principal"] and real_llm == [2]   # 2 s d'attente par défaut
+    assert llm.generator_info()["model"] == "principal"
+
+
+def test_llm_uses_fallback_model_and_reports_it(monkeypatch, real_llm):
+    calls = []
+    client = fake_client([RateLimited()] * 3 + ["via secours"], calls)
+    monkeypatch.setattr(llm, "_client", lambda key, url: client)
+    assert llm.complete("s", "u") == "via secours"
+    assert calls == ["principal"] * 3 + ["secours"] and real_llm == [2, 5]
+    assert llm.generator_info()["model"] == "secours"
+
+
+def test_llm_gives_up_when_retry_after_exceeds_the_budget(monkeypatch, real_llm):
+    class Slow(RateLimited):
+        response = type("Resp", (), {"headers": {"retry-after": "60"}})
+    calls = []
+    client = fake_client([Slow(), Slow()], calls)
+    monkeypatch.setattr(llm, "_client", lambda key, url: client)
+    assert llm.complete("s", "u") is None
+    assert calls == ["principal", "secours"] and real_llm == []   # aucune attente de 60 s
+
+
+def test_llm_answers_are_cached(monkeypatch, real_llm):
+    calls = []
+    client = fake_client(["une seule fois"], calls)
+    monkeypatch.setattr(llm, "_client", lambda key, url: client)
+    assert llm.complete("s", "Quelle  QUESTION ?") == "une seule fois"
+    assert llm.complete("s", "quelle question ?") == "une seule fois"
+    assert len(calls) == 1
+
+
+def test_rate_limit_then_success_gives_llm_mode(backend, monkeypatch, real_llm):
+    """De bout en bout : un 429 puis des succès -> generator.mode == llm."""
+    state = {"n": 0}
+
+    class Client:
+        class chat:   # noqa: N801
+            class completions:   # noqa: N801
+                @staticmethod
+                def create(**kwargs):
+                    state["n"] += 1
+                    if state["n"] == 1:
+                        raise RateLimited()
+                    content = kwargs["messages"][1]["content"]
+                    if '"faits"' not in content:   # étape « comprendre » : JSON invalide -> mots-clés
+                        return reply("{}")
+                    return reply(f"LALSTOP G46 WG est suivi [{json.loads(content)['faits'][0]['evidenceIds'][0]}].")
+    monkeypatch.setattr(llm, "_client", lambda key, url: Client)
+    answer = ask("Dans quels pays LALSTOP G46 est-il homologué ?")
+    assert answer["generator"]["mode"] == "llm" and state["n"] >= 2
+
+
+def test_llm_answer_is_cut_to_three_sentences(backend, fake_ai):
+    fake_ai(lambda p: " ".join(f"Phrase {i} [{first_evidence_id(p)}]." for i in range(1, 7)))
+    answer = ask("Dans quels pays LALSTOP G46 est-il homologué ?")
+    assert len(agent.split_sentences(answer["answer"])) <= 3
+
+
+def test_llm_prompt_is_small(backend, fake_ai):
+    seen = {}
+    fake_ai(lambda p: seen.update(p) or f"LALSTOP G46 WG [{first_evidence_id(p)}].")
+    ask("Quels champs sont manquants ou incertains pour LALSTOP G46 ?")
+    assert len(seen["faits"]) <= agent.MAX_FACTS_IN_PROMPT
+    assert all(len(f["evidenceIds"]) <= agent.MAX_IDS_PER_FACT for f in seen["faits"])
+
+
+def test_coverage_sentences_differ_by_outcome_and_group_countries():
+    cov = [{"countryCode": "FR", "outcome": "found"}, {"countryCode": "US", "outcome": "not_covered"},
+           {"countryCode": "BR", "outcome": "not_covered"}, {"countryCode": "DE", "outcome": "not_found"},
+           {"countryCode": "CA", "outcome": "source_unavailable"}]
+    text = agent.coverage_sentence(cov)
+    assert "Aucun résultat dans les sources intégrées pour DE — ce n'est pas une preuve d'absence d'homologation." in text
+    assert "US, BR : marché non couvert par le prototype (aucune source officielle intégrée)." in text
+    assert "CA : source officielle indisponible lors de la dernière collecte." in text
+
+
+def test_row_key_aligns_by_normalized_name_when_a_country_has_no_eppo_code():
+    fr = {"eppoCropCode": "LYPES", "cropNormalized": "Tomato", "cropOriginal": "tomate",
+          "eppoTargetCode": None, "targetNormalized": "Botrytis", "targetOriginal": "botrytis"}
+    ca = {"eppoCropCode": None, "cropNormalized": "tomato", "cropOriginal": "Tomatoes",
+          "eppoTargetCode": None, "targetNormalized": "BOTRYTIS", "targetOriginal": "gray mould"}
+    lookup = services.eppo_lookup([fr, ca])   # « tomato » -> LYPES grâce au pays qui a le code
+    assert services.row_key(fr, lookup)[0] == services.row_key(ca, lookup)[0]
+    # sans aucun code connu : alignement par nom normalisé, insensible à la casse
+    other = {**ca, "cropNormalized": "TOMATO", "cropOriginal": "tomate"}
+    (key_a, by_a), (key_b, by_b) = services.row_key(ca), services.row_key(other)
+    assert key_a == key_b and by_a == by_b == "normalized_name"
+    assert services.row_key({**ca, "cropNormalized": None, "targetNormalized": None})[1] == "original"

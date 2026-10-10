@@ -717,19 +717,40 @@ def product_registrations(product_id, country, include_synthetic, limit, offset,
 # ---------------------------------------------------------------------------
 # Comparaison entre pays
 # ---------------------------------------------------------------------------
-def row_key(use):
-    """Clé d'alignement : codes EPPO, sinon noms normalisés, sinon originaux (minuscules)."""
-    def part(code, normalized, original):
+def eppo_lookup(uses):
+    """{("crop"|"target", nom normalisé en minuscules): code EPPO} pour les noms qui ont UN SEUL code dans ces usages.
+
+    Sert à rapprocher « Tomato » (sans code, FR ou CA) de « Tomato » (code LYPES, autre pays).
+    """
+    seen = {}
+    for use in uses:
+        for kind, code, name in (("crop", use["eppoCropCode"], use["cropNormalized"]),
+                                 ("target", use["eppoTargetCode"], use["targetNormalized"])):
+            if code and name:
+                seen.setdefault((kind, name.strip().lower()), set()).add(code)
+    return {k: next(iter(v)) for k, v in seen.items() if len(v) == 1}
+
+
+def row_key(use, lookup=None):
+    """(clé d'alignement, alignedBy). Par partie (culture, cible) : code EPPO si connu, SINON nom normalisé
+    (insensible à la casse), SINON valeur originale. alignedBy = la méthode la plus faible des deux parties
+    (eppo > normalized_name > original)."""
+    lookup = lookup or {}
+
+    def part(kind, code, normalized, original):
         if code:
             return code, "eppo"
         if normalized:
-            return normalized.strip().lower(), "norm"
+            name = normalized.strip().lower()
+            return (lookup[(kind, name)], "eppo") if (kind, name) in lookup else (name, "normalized_name")
         if original:
-            return original.strip().lower(), "orig"
-        return "", "none"
-    c, ck = part(use["eppoCropCode"], use["cropNormalized"], use["cropOriginal"])
-    t, tk = part(use["eppoTargetCode"], use["targetNormalized"], use["targetOriginal"])
-    return f"{ck}:{c}|{tk}:{t}"
+            return original.strip().lower(), "original"
+        return "", None   # partie absente : ne compte pas dans alignedBy
+    c, ck = part("crop", use["eppoCropCode"], use["cropNormalized"], use["cropOriginal"])
+    t, tk = part("target", use["eppoTargetCode"], use["targetNormalized"], use["targetOriginal"])
+    order = ["eppo", "normalized_name", "original"]
+    weakest = max((k for k in (ck, tk) if k), key=order.index, default="original")
+    return f"{ck}:{c}|{tk}:{t}", weakest
 
 
 def term_groups(use_ids):
@@ -762,11 +783,14 @@ def compare_uses(product_id, countries, crop, target, include_synthetic, limit, 
 
     # Lignes : clé -> {libellés, cellules par pays}
     groups = term_groups([use["useId"] for use_list in uses.values() for use in use_list])
+    lookup = eppo_lookup([use for use_list in uses.values() for use in use_list])
     rows = {}
     for rid, use_list in uses.items():
         cc = regs_by_id[rid]["country_code"]
         for use in use_list:
-            row = rows.setdefault(row_key(use), {
+            key, aligned_by = row_key(use, lookup)
+            row = rows.setdefault(key, {
+                "alignedBy": aligned_by,
                 "cropNormalized": use["cropNormalized"], "eppoCropCode": use["eppoCropCode"],
                 "targetNormalized": use["targetNormalized"], "eppoTargetCode": use["eppoTargetCode"],
                 "cropGroup": None, "targetGroup": None, "by_country": {}})
@@ -789,13 +813,13 @@ def compare_uses(product_id, countries, crop, target, include_synthetic, limit, 
                          "not_covered": "not_covered"}.get(outcome.get(cc), "registration_not_found")
                 cell = {"countryCode": cc, "state": state, "registrationId": None, "uses": []}
             cells.append(cell)
-        not_everywhere = any(c["state"] != "present" for c in cells)
+        # « Différent » = comparaison des seuls pays qui ont une valeur : un pays sans usage extrait n'est pas une différence
         doses_differ = len({tuple(v) for v in doses.values()}) > 1
         out_rows.append({
             "rowId": key, "cropNormalized": row["cropNormalized"], "eppoCropCode": row["eppoCropCode"],
             "targetNormalized": row["targetNormalized"], "eppoTargetCode": row["eppoTargetCode"],
             "cropGroup": row["cropGroup"], "targetGroup": row["targetGroup"],
-            "differsAcrossCountries": not_everywhere or doses_differ, "cells": cells})
+            "alignedBy": row["alignedBy"], "differsAcrossCountries": doses_differ, "cells": cells})
 
     # registrations[] : 50 usages au plus par homologation (le détail complet est dans rows[].cells[].uses)
     registrations = [registration_dict(r, uses.get(r["registration_id"], [])[:50]) for r in matched[:300]]

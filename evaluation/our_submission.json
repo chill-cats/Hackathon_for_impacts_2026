@@ -1,0 +1,1697 @@
+{
+  "submission_id": "lpc-regulatory-agent",
+  "generated_at": "2026-10-10T03:10:56Z",
+  "answers": [
+    {
+      "test_id": "T01",
+      "answer": "Le produit pilote est homologué au Canada (statut actif) et en France (statut actif) [registration:R-CA-28820] [registration:R-FR-EPHY-2230771]. En Allemagne, le statut est indiqué comme inconnu et n’est pas confirmé [registration:R-DE-BVL-00B229-00]. US, MX, BR, UY, BE, ES, IT : marché non couvert par le prototype (aucune source officielle intégrée).",
+      "facts": [
+        {
+          "fact_id": "R-CA-28820#status",
+          "label": "Statut de PRESTOP (CA)",
+          "field": "registration.statusNormalized",
+          "value": "active",
+          "value_original": "Full Registration",
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-CA-28820#registrationNumber",
+          "label": "Numéro d'homologation de PRESTOP (CA)",
+          "field": "registration.registrationNumber",
+          "value": "28820",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-CA-28820#approvalDate",
+          "label": "Date d'homologation de PRESTOP (CA)",
+          "field": "registration.approvalDate",
+          "value": "2008-04-16",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-CA-28820#expirationDate",
+          "label": "Date d'expiration de PRESTOP (CA)",
+          "field": "registration.expirationDate",
+          "value": "2028-12-31",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-CA-28820#matchedVia",
+          "label": "Rapprochement de PRESTOP (CA) avec le produit demandé",
+          "field": "registration.matchedVia",
+          "value": "Clonostachys rosea J1446 (active_entity)",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-CA-32404#status",
+          "label": "Statut de PRESTOP WG (CA)",
+          "field": "registration.statusNormalized",
+          "value": "active",
+          "value_original": "Full Registration",
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        },
+        {
+          "fact_id": "R-CA-32404#registrationNumber",
+          "label": "Numéro d'homologation de PRESTOP WG (CA)",
+          "field": "registration.registrationNumber",
+          "value": "32404",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        },
+        {
+          "fact_id": "R-CA-32404#approvalDate",
+          "label": "Date d'homologation de PRESTOP WG (CA)",
+          "field": "registration.approvalDate",
+          "value": "2016-09-07",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        },
+        {
+          "fact_id": "R-CA-32404#expirationDate",
+          "label": "Date d'expiration de PRESTOP WG (CA)",
+          "field": "registration.expirationDate",
+          "value": "2026-12-31",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        },
+        {
+          "fact_id": "R-CA-32404#matchedVia",
+          "label": "Rapprochement de PRESTOP WG (CA) avec le produit demandé",
+          "field": "registration.matchedVia",
+          "value": "Clonostachys rosea J1446 (active_entity)",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        },
+        {
+          "fact_id": "R-DE-BVL-00B229-00#status",
+          "label": "Statut de LALSTOP G46 WG (DE)",
+          "field": "registration.statusNormalized",
+          "value": "unknown",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-00B229-00"
+          ]
+        },
+        {
+          "fact_id": "R-DE-BVL-00B229-00#registrationNumber",
+          "label": "Numéro d'homologation de LALSTOP G46 WG (DE)",
+          "field": "registration.registrationNumber",
+          "value": "00B229-00",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-00B229-00"
+          ]
+        },
+        {
+          "fact_id": "R-DE-BVL-00B229-00#approvalDate",
+          "label": "Date d'homologation de LALSTOP G46 WG (DE)",
+          "field": "registration.approvalDate",
+          "value": "2025-03-26",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-00B229-00"
+          ]
+        },
+        {
+          "fact_id": "R-DE-BVL-00B229-00#expirationDate",
+          "label": "Date d'expiration de LALSTOP G46 WG (DE)",
+          "field": "registration.expirationDate",
+          "value": "2035-03-31",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-00B229-00"
+          ]
+        },
+        {
+          "fact_id": "R-DE-BVL-027495-00#status",
+          "label": "Statut de PRESTOP (WP) (DE)",
+          "field": "registration.statusNormalized",
+          "value": "unknown",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-027495-00"
+          ]
+        },
+        {
+          "fact_id": "R-DE-BVL-027495-00#registrationNumber",
+          "label": "Numéro d'homologation de PRESTOP (WP) (DE)",
+          "field": "registration.registrationNumber",
+          "value": "027495-00",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-027495-00"
+          ]
+        },
+        {
+          "fact_id": "R-DE-BVL-027495-00#approvalDate",
+          "label": "Date d'homologation de PRESTOP (WP) (DE)",
+          "field": "registration.approvalDate",
+          "value": "2022-06-30",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-027495-00"
+          ]
+        },
+        {
+          "fact_id": "R-DE-BVL-027495-00#expirationDate",
+          "label": "Date d'expiration de PRESTOP (WP) (DE)",
+          "field": "registration.expirationDate",
+          "value": "2035-03-31",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-027495-00"
+          ]
+        },
+        {
+          "fact_id": "R-DE-BVL-027495-00#matchedVia",
+          "label": "Rapprochement de PRESTOP (WP) (DE) avec le produit demandé",
+          "field": "registration.matchedVia",
+          "value": "Clonostachys rosea J1446 (active_entity)",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-027495-00"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230771#status",
+          "label": "Statut de LALSTOP G46 WG (FR)",
+          "field": "registration.statusNormalized",
+          "value": "active",
+          "value_original": "AUTORISE",
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230771"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230771#registrationNumber",
+          "label": "Numéro d'homologation de LALSTOP G46 WG (FR)",
+          "field": "registration.registrationNumber",
+          "value": "2230771",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230771"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230771#approvalDate",
+          "label": "Date d'homologation de LALSTOP G46 WG (FR)",
+          "field": "registration.approvalDate",
+          "value": "2024-01-16",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230771"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230264#status",
+          "label": "Statut de LALFRESH S (FR)",
+          "field": "registration.statusNormalized",
+          "value": "active",
+          "value_original": "AUTORISE",
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230264"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230264#registrationNumber",
+          "label": "Numéro d'homologation de LALFRESH S (FR)",
+          "field": "registration.registrationNumber",
+          "value": "2230264",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230264"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230264#approvalDate",
+          "label": "Date d'homologation de LALFRESH S (FR)",
+          "field": "registration.approvalDate",
+          "value": "2023-05-15",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230264"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230264#matchedVia",
+          "label": "Rapprochement de LALFRESH S (FR) avec le produit demandé",
+          "field": "registration.matchedVia",
+          "value": "Clonostachys rosea J1446 (active_entity)",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230264"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2120177#status",
+          "label": "Statut de PRESTOP (FR)",
+          "field": "registration.statusNormalized",
+          "value": "active",
+          "value_original": "AUTORISE",
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2120177"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2120177#registrationNumber",
+          "label": "Numéro d'homologation de PRESTOP (FR)",
+          "field": "registration.registrationNumber",
+          "value": "2120177",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2120177"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2120177#approvalDate",
+          "label": "Date d'homologation de PRESTOP (FR)",
+          "field": "registration.approvalDate",
+          "value": "2012-11-05",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2120177"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2120177#matchedVia",
+          "label": "Rapprochement de PRESTOP (FR) avec le produit demandé",
+          "field": "registration.matchedVia",
+          "value": "Clonostachys rosea J1446 (active_entity)",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2120177"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2150847#status",
+          "label": "Statut de PRESTOP 4B (FR)",
+          "field": "registration.statusNormalized",
+          "value": "active",
+          "value_original": "AUTORISE",
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2150847"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2150847#registrationNumber",
+          "label": "Numéro d'homologation de PRESTOP 4B (FR)",
+          "field": "registration.registrationNumber",
+          "value": "2150847",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2150847"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2150847#approvalDate",
+          "label": "Date d'homologation de PRESTOP 4B (FR)",
+          "field": "registration.approvalDate",
+          "value": "2023-01-09",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2150847"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2150847#matchedVia",
+          "label": "Rapprochement de PRESTOP 4B (FR) avec le produit demandé",
+          "field": "registration.matchedVia",
+          "value": "Clonostachys rosea J1446 (active_entity)",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2150847"
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-CA-28820",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-CA-32404",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "DE-BVL",
+          "source_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/",
+          "collected_at": "2026-10-10T01:34:37.356822Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-DE-BVL-00B229-00",
+          "source_record_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/mittel/?offset=500&limit=500",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "DE-BVL",
+          "source_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/",
+          "collected_at": "2026-10-10T01:34:38.483901Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-DE-BVL-027495-00",
+          "source_record_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/mittel/?offset=1500&limit=500",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2230771",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2230264",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2120177",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2150847",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        }
+      ],
+      "warnings": [
+        "US : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "MX : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "BR : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "UY : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "BE : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "ES : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "IT : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "5 homologation(s) ont plus de 3 usages : seuls les 3 premiers sont renvoyés (paramètre usesLimit), ex. R-CA-28820 : 30 usages."
+      ],
+      "disclaimer": "Pas une source réglementaire officielle. Validation Regulatory Affairs requise."
+    },
+    {
+      "test_id": "T02",
+      "answer": "Le produit PRESTOP est indiqué comme actif au Canada et LALSTOP G46 WG comme actif en France, mais ces statuts proviennent d’extractions automatiques et ne sont pas confirmés [registration:R-CA-28820] [registration:R-FR-EPHY-2230771]. Aucune différence d’usage contre Botrytis cinerea n’est relevée entre le Canada et la France [use:U-CA-28820-T05].",
+      "facts": [
+        {
+          "fact_id": "R-CA-28820#status",
+          "label": "Statut de PRESTOP (CA)",
+          "field": "registration.statusNormalized",
+          "value": "active",
+          "value_original": "Full Registration",
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-CA-28820#registrationNumber",
+          "label": "Numéro d'homologation de PRESTOP (CA)",
+          "field": "registration.registrationNumber",
+          "value": "28820",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-CA-28820#approvalDate",
+          "label": "Date d'homologation de PRESTOP (CA)",
+          "field": "registration.approvalDate",
+          "value": "2008-04-16",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-CA-28820#expirationDate",
+          "label": "Date d'expiration de PRESTOP (CA)",
+          "field": "registration.expirationDate",
+          "value": "2028-12-31",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-CA-28820#matchedVia",
+          "label": "Rapprochement de PRESTOP (CA) avec le produit demandé",
+          "field": "registration.matchedVia",
+          "value": "Clonostachys rosea J1446 (active_entity)",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-CA-32404#status",
+          "label": "Statut de PRESTOP WG (CA)",
+          "field": "registration.statusNormalized",
+          "value": "active",
+          "value_original": "Full Registration",
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        },
+        {
+          "fact_id": "R-CA-32404#registrationNumber",
+          "label": "Numéro d'homologation de PRESTOP WG (CA)",
+          "field": "registration.registrationNumber",
+          "value": "32404",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        },
+        {
+          "fact_id": "R-CA-32404#approvalDate",
+          "label": "Date d'homologation de PRESTOP WG (CA)",
+          "field": "registration.approvalDate",
+          "value": "2016-09-07",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        },
+        {
+          "fact_id": "R-CA-32404#expirationDate",
+          "label": "Date d'expiration de PRESTOP WG (CA)",
+          "field": "registration.expirationDate",
+          "value": "2026-12-31",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        },
+        {
+          "fact_id": "R-CA-32404#matchedVia",
+          "label": "Rapprochement de PRESTOP WG (CA) avec le produit demandé",
+          "field": "registration.matchedVia",
+          "value": "Clonostachys rosea J1446 (active_entity)",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230771#status",
+          "label": "Statut de LALSTOP G46 WG (FR)",
+          "field": "registration.statusNormalized",
+          "value": "active",
+          "value_original": "AUTORISE",
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230771"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230771#registrationNumber",
+          "label": "Numéro d'homologation de LALSTOP G46 WG (FR)",
+          "field": "registration.registrationNumber",
+          "value": "2230771",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230771"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230771#approvalDate",
+          "label": "Date d'homologation de LALSTOP G46 WG (FR)",
+          "field": "registration.approvalDate",
+          "value": "2024-01-16",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230771"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230264#status",
+          "label": "Statut de LALFRESH S (FR)",
+          "field": "registration.statusNormalized",
+          "value": "active",
+          "value_original": "AUTORISE",
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230264"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230264#registrationNumber",
+          "label": "Numéro d'homologation de LALFRESH S (FR)",
+          "field": "registration.registrationNumber",
+          "value": "2230264",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230264"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230264#approvalDate",
+          "label": "Date d'homologation de LALFRESH S (FR)",
+          "field": "registration.approvalDate",
+          "value": "2023-05-15",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230264"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230264#matchedVia",
+          "label": "Rapprochement de LALFRESH S (FR) avec le produit demandé",
+          "field": "registration.matchedVia",
+          "value": "Clonostachys rosea J1446 (active_entity)",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230264"
+          ]
+        },
+        {
+          "fact_id": "U-CA-28820-T05#restrictions",
+          "label": "Restrictions — ? × Botrytis cinerea (CA)",
+          "field": "use.restrictionsOriginal",
+          "value": "Product-level list from Health Canada PPID; crop-target pairing, dose and conditions must come from the official label",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T05"
+          ]
+        },
+        {
+          "fact_id": "None:|eppo:BOTRCI#differs",
+          "label": "Différence entre pays — ? × Botrytis cinerea",
+          "field": "comparison.differsAcrossCountries",
+          "value": false,
+          "value_original": null,
+          "country_code": null,
+          "validation_status": null,
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T05"
+          ]
+        },
+        {
+          "fact_id": "U-CA-28820-T07#restrictions",
+          "label": "Restrictions — ? × Fusarium oxysporum (CA)",
+          "field": "use.restrictionsOriginal",
+          "value": "Product-level list from Health Canada PPID; crop-target pairing, dose and conditions must come from the official label",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T07"
+          ]
+        },
+        {
+          "fact_id": "None:|eppo:FUSAOX#differs",
+          "label": "Différence entre pays — ? × Fusarium oxysporum",
+          "field": "comparison.differsAcrossCountries",
+          "value": false,
+          "value_original": null,
+          "country_code": null,
+          "validation_status": null,
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T07"
+          ]
+        },
+        {
+          "fact_id": "U-CA-28820-T04#restrictions",
+          "label": "Restrictions — ? × Rhizoctonia solani (CA)",
+          "field": "use.restrictionsOriginal",
+          "value": "Product-level list from Health Canada PPID; crop-target pairing, dose and conditions must come from the official label",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T04"
+          ]
+        },
+        {
+          "fact_id": "None:|eppo:RHIZSO#differs",
+          "label": "Différence entre pays — ? × Rhizoctonia solani",
+          "field": "comparison.differsAcrossCountries",
+          "value": false,
+          "value_original": null,
+          "country_code": null,
+          "validation_status": null,
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T04"
+          ]
+        },
+        {
+          "fact_id": "U-CA-28820-T01#restrictions",
+          "label": "Restrictions — ? × BASAL STEM ROT (PHYTOPHTHORA CRYPTOGEA) (CA)",
+          "field": "use.restrictionsOriginal",
+          "value": "Product-level list from Health Canada PPID; crop-target pairing, dose and conditions must come from the official label",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T01"
+          ]
+        },
+        {
+          "fact_id": "None:|original:basal stem rot (phytophthora cryptogea)#differs",
+          "label": "Différence entre pays — ? × ?",
+          "field": "comparison.differsAcrossCountries",
+          "value": false,
+          "value_original": null,
+          "country_code": null,
+          "validation_status": null,
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T01"
+          ]
+        },
+        {
+          "fact_id": "U-CA-28820-T02#restrictions",
+          "label": "Restrictions — ? × CROWN AND ROOT ROT (PYTHIUM SP.) (CA)",
+          "field": "use.restrictionsOriginal",
+          "value": "Product-level list from Health Canada PPID; crop-target pairing, dose and conditions must come from the official label",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T02"
+          ]
+        },
+        {
+          "fact_id": "None:|original:crown and root rot (pythium sp.)#differs",
+          "label": "Différence entre pays — ? × ?",
+          "field": "comparison.differsAcrossCountries",
+          "value": false,
+          "value_original": null,
+          "country_code": null,
+          "validation_status": null,
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T02"
+          ]
+        },
+        {
+          "fact_id": "U-CA-32404-T01#restrictions",
+          "label": "Restrictions — ? × CROWN AND ROOT ROT (PYTHIUM SPP.) (CA)",
+          "field": "use.restrictionsOriginal",
+          "value": "Product-level list from Health Canada PPID; crop-target pairing, dose and conditions must come from the official label",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-32404-T01"
+          ]
+        },
+        {
+          "fact_id": "None:|original:crown and root rot (pythium spp.)#differs",
+          "label": "Différence entre pays — ? × ?",
+          "field": "comparison.differsAcrossCountries",
+          "value": false,
+          "value_original": null,
+          "country_code": null,
+          "validation_status": null,
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-32404-T01"
+          ]
+        },
+        {
+          "fact_id": "U-CA-28820-T03#restrictions",
+          "label": "Restrictions — ? × DAMPING-OFF (PYTHIUM SP) (CA)",
+          "field": "use.restrictionsOriginal",
+          "value": "Product-level list from Health Canada PPID; crop-target pairing, dose and conditions must come from the official label",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T03"
+          ]
+        },
+        {
+          "fact_id": "None:|original:damping-off (pythium sp)#differs",
+          "label": "Différence entre pays — ? × ?",
+          "field": "comparison.differsAcrossCountries",
+          "value": false,
+          "value_original": null,
+          "country_code": null,
+          "validation_status": null,
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-T03"
+          ]
+        },
+        {
+          "fact_id": "U-CA-32404-T02#restrictions",
+          "label": "Restrictions — ? × DAMPING-OFF (PYTHIUM SPP. AND RHIZOCTONIA SOLANI) (CA)",
+          "field": "use.restrictionsOriginal",
+          "value": "Product-level list from Health Canada PPID; crop-target pairing, dose and conditions must come from the official label",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-32404-T02"
+          ]
+        },
+        {
+          "fact_id": "None:|original:damping-off (pythium spp. and rhizoctonia solani)#differs",
+          "label": "Différence entre pays — ? × ?",
+          "field": "comparison.differsAcrossCountries",
+          "value": false,
+          "value_original": null,
+          "country_code": null,
+          "validation_status": null,
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-32404-T02"
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-CA-28820",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-CA-32404",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2230771",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2230264",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-T05",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-T07",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-T04",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-T01",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-T02",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-32404-T01",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-T03",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-32404-T02",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
+          "is_synthetic": false
+        }
+      ],
+      "warnings": [
+        "Seules 8 lignes de comparaison sont détaillées en faits ; le tableau comparison.rows est complet."
+      ],
+      "disclaimer": "Pas une source réglementaire officielle. Validation Regulatory Affairs requise."
+    },
+    {
+      "test_id": "T03",
+      "answer": "Les statuts de validation des enregistrements R-CA-28820, R-DE-BVL-00B229-00 et R-FR-EPHY-2120177 sont incertains car ils proviennent d’une extraction automatique [registration:R-CA-28820] [registration:R-DE-BVL-00B229-00] [registration:R-FR-EPHY-2120177]. De même, les statuts de validation des enregistrements R-CA-32404 et R-DE-BVL-027495-00 restent non validés et donc incertains [registration:R-CA-32404] [registration:R-DE-BVL-027495-00].",
+      "facts": [
+        {
+          "fact_id": "not_validated:registration:R-CA-28820:validationStatus",
+          "label": "not_validated — validationStatus (registration R-CA-28820)",
+          "field": "registration.validationStatus",
+          "value": "validationStatus = automatically_extracted",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "not_validated:registration:R-CA-32404:validationStatus",
+          "label": "not_validated — validationStatus (registration R-CA-32404)",
+          "field": "registration.validationStatus",
+          "value": "validationStatus = automatically_extracted",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        },
+        {
+          "fact_id": "not_validated:registration:R-DE-BVL-00B229-00:validationStatus",
+          "label": "not_validated — validationStatus (registration R-DE-BVL-00B229-00)",
+          "field": "registration.validationStatus",
+          "value": "validationStatus = automatically_extracted",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-00B229-00"
+          ]
+        },
+        {
+          "fact_id": "not_validated:registration:R-DE-BVL-027495-00:validationStatus",
+          "label": "not_validated — validationStatus (registration R-DE-BVL-027495-00)",
+          "field": "registration.validationStatus",
+          "value": "validationStatus = automatically_extracted",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-027495-00"
+          ]
+        },
+        {
+          "fact_id": "not_validated:registration:R-FR-EPHY-2120177:validationStatus",
+          "label": "not_validated — validationStatus (registration R-FR-EPHY-2120177)",
+          "field": "registration.validationStatus",
+          "value": "validationStatus = automatically_extracted",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2120177"
+          ]
+        },
+        {
+          "fact_id": "not_validated:registration:R-FR-EPHY-2150847:validationStatus",
+          "label": "not_validated — validationStatus (registration R-FR-EPHY-2150847)",
+          "field": "registration.validationStatus",
+          "value": "validationStatus = automatically_extracted",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2150847"
+          ]
+        },
+        {
+          "fact_id": "not_validated:registration:R-FR-EPHY-2230264:validationStatus",
+          "label": "not_validated — validationStatus (registration R-FR-EPHY-2230264)",
+          "field": "registration.validationStatus",
+          "value": "validationStatus = automatically_extracted",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230264"
+          ]
+        },
+        {
+          "fact_id": "not_validated:registration:R-FR-EPHY-2230771:validationStatus",
+          "label": "not_validated — validationStatus (registration R-FR-EPHY-2230771)",
+          "field": "registration.validationStatus",
+          "value": "validationStatus = automatically_extracted",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230771"
+          ]
+        },
+        {
+          "fact_id": "not_validated:use:U-CA-28820-C01:validationStatus",
+          "label": "not_validated — validationStatus (use U-CA-28820-C01)",
+          "field": "use.validationStatus",
+          "value": "validationStatus = to_verify",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-C01"
+          ]
+        },
+        {
+          "fact_id": "not_validated:use:U-CA-28820-C02:validationStatus",
+          "label": "not_validated — validationStatus (use U-CA-28820-C02)",
+          "field": "use.validationStatus",
+          "value": "validationStatus = to_verify",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-C02"
+          ]
+        },
+        {
+          "fact_id": "not_validated:use:U-CA-28820-C03:validationStatus",
+          "label": "not_validated — validationStatus (use U-CA-28820-C03)",
+          "field": "use.validationStatus",
+          "value": "validationStatus = to_verify",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-C03"
+          ]
+        },
+        {
+          "fact_id": "not_validated:use:U-CA-28820-C04:validationStatus",
+          "label": "not_validated — validationStatus (use U-CA-28820-C04)",
+          "field": "use.validationStatus",
+          "value": "validationStatus = to_verify",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-C04"
+          ]
+        },
+        {
+          "fact_id": "not_validated:use:U-CA-28820-C05:validationStatus",
+          "label": "not_validated — validationStatus (use U-CA-28820-C05)",
+          "field": "use.validationStatus",
+          "value": "validationStatus = to_verify",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-C05"
+          ]
+        },
+        {
+          "fact_id": "not_validated:use:U-CA-28820-C06:validationStatus",
+          "label": "not_validated — validationStatus (use U-CA-28820-C06)",
+          "field": "use.validationStatus",
+          "value": "validationStatus = to_verify",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-C06"
+          ]
+        },
+        {
+          "fact_id": "not_validated:use:U-CA-28820-C07:validationStatus",
+          "label": "not_validated — validationStatus (use U-CA-28820-C07)",
+          "field": "use.validationStatus",
+          "value": "validationStatus = to_verify",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": null,
+          "evidence_ids": [
+            "use:U-CA-28820-C07"
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-CA-28820",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-CA-32404",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "DE-BVL",
+          "source_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/",
+          "collected_at": "2026-10-10T01:34:37.356822Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-DE-BVL-00B229-00",
+          "source_record_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/mittel/?offset=500&limit=500",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "DE-BVL",
+          "source_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/",
+          "collected_at": "2026-10-10T01:34:38.483901Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-DE-BVL-027495-00",
+          "source_record_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/mittel/?offset=1500&limit=500",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2120177",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2150847",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2230264",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2230771",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-C01",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-C02",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-C03",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-C04",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-C05",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-C06",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "to_verify",
+          "evidence_id": "use:U-CA-28820-C07",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        }
+      ],
+      "warnings": [],
+      "disclaimer": "Pas une source réglementaire officielle. Validation Regulatory Affairs requise."
+    },
+    {
+      "test_id": "T04",
+      "answer": "Les produits LALFRESH S, PRESTOP (WP) et PRESTOP 4B sont proposés comme candidats à être des produits sœurs, mais cette hypothèse reste à vérifier [registration:R-FR-EPHY-2230264] [registration:R-DE-BVL-027495-00] [registration:R-FR-EPHY-2150847]. De même, PRESTOP et PRESTOP WG apparaissent comme candidats potentiels, toutefois leur statut de produit sœur n’est pas confirmé [registration:R-CA-28820] [registration:R-FR-EPHY-2120177] [registration:R-CA-32404].",
+      "facts": [
+        {
+          "fact_id": "sister:A-SIS-d19bbde7aa66c1b1",
+          "label": "Candidat produit sœur (hypothèse à confirmer) : LALFRESH S",
+          "field": "sisterCandidate.confidenceScore",
+          "value": 0.9,
+          "value_original": "[same_active_entity] same species (Clonostachys rosea) and same strain (J1446); computed from active_entity of both products",
+          "country_code": "FR",
+          "validation_status": "to_verify",
+          "confidence": 0.9,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230264"
+          ]
+        },
+        {
+          "fact_id": "sister:A-SIS-47b57d0ad8501490",
+          "label": "Candidat produit sœur (hypothèse à confirmer) : PRESTOP (WP)",
+          "field": "sisterCandidate.confidenceScore",
+          "value": 0.9,
+          "value_original": "[same_active_entity] same species (Clonostachys rosea) and same strain (J1446); computed from active_entity of both products",
+          "country_code": null,
+          "validation_status": "to_verify",
+          "confidence": 0.9,
+          "evidence_ids": [
+            "registration:R-DE-BVL-027495-00"
+          ]
+        },
+        {
+          "fact_id": "sister:A-SIS-f81aa7e229454d81",
+          "label": "Candidat produit sœur (hypothèse à confirmer) : PRESTOP 4B",
+          "field": "sisterCandidate.confidenceScore",
+          "value": 0.9,
+          "value_original": "[same_active_entity] same species (Clonostachys rosea) and same strain (J1446); computed from active_entity of both products",
+          "country_code": "FR",
+          "validation_status": "to_verify",
+          "confidence": 0.9,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2150847"
+          ]
+        },
+        {
+          "fact_id": "sister:AL-CA-28820",
+          "label": "Candidat produit sœur (hypothèse à confirmer) : PRESTOP",
+          "field": "sisterCandidate.confidenceScore",
+          "value": 0.85,
+          "value_original": "Same active entity (Clonostachys rosea, same strain) in Health Canada PPID reg. 28820; also listed in LPC product_name_mapping PNM-004",
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": 0.85,
+          "evidence_ids": [
+            "registration:R-CA-28820",
+            "registration:R-FR-EPHY-2120177"
+          ]
+        },
+        {
+          "fact_id": "sister:AL-CA-32404",
+          "label": "Candidat produit sœur (hypothèse à confirmer) : PRESTOP WG",
+          "field": "sisterCandidate.confidenceScore",
+          "value": 0.8,
+          "value_original": "Same active entity (Clonostachys rosea, same strain) in Health Canada PPID reg. 32404",
+          "country_code": "CA",
+          "validation_status": "to_verify",
+          "confidence": 0.8,
+          "evidence_ids": [
+            "registration:R-CA-32404"
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2230264",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "DE-BVL",
+          "source_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/",
+          "collected_at": "2026-10-10T01:34:38.483901Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-DE-BVL-027495-00",
+          "source_record_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/mittel/?offset=1500&limit=500",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2150847",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-CA-28820",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2120177",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-CA-32404",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
+          "is_synthetic": false
+        }
+      ],
+      "warnings": [
+        "Hypothèses à confirmer : un produit sœur n'est jamais confirmé tant que reviewStatus n'est pas « validated »."
+      ],
+      "disclaimer": "Pas une source réglementaire officielle. Validation Regulatory Affairs requise."
+    },
+    {
+      "test_id": "T05",
+      "answer": "Pour le Canada, la source officielle est Health Canada PPID (extraction automatique) [registration:R-CA-28820] ; pour l’Allemagne, c’est BVL PSM API (extraction automatique) [registration:R-DE-BVL-00B229-00] ; pour la France, la source officielle est ANSES E‑Phy Open Data (extraction automatique) [registration:R-FR-EPHY-2230771].",
+      "facts": [
+        {
+          "fact_id": "R-CA-28820#source",
+          "label": "Source officielle de PRESTOP (CA) : Health Canada PPID",
+          "field": "evidence.sourceId",
+          "value": "CA-PPID",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-CA-28820#collectedAt",
+          "label": "Date de collecte de PRESTOP (CA)",
+          "field": "evidence.collectedAt",
+          "value": "2026-10-10T02:20:29.255371+00:00",
+          "value_original": null,
+          "country_code": "CA",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-CA-28820"
+          ]
+        },
+        {
+          "fact_id": "R-DE-BVL-00B229-00#source",
+          "label": "Source officielle de LALSTOP G46 WG (DE) : BVL PSM API",
+          "field": "evidence.sourceId",
+          "value": "DE-BVL",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-00B229-00"
+          ]
+        },
+        {
+          "fact_id": "R-DE-BVL-00B229-00#collectedAt",
+          "label": "Date de collecte de LALSTOP G46 WG (DE)",
+          "field": "evidence.collectedAt",
+          "value": "2026-10-10T01:34:37.356822+00:00",
+          "value_original": null,
+          "country_code": "DE",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-DE-BVL-00B229-00"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230771#source",
+          "label": "Source officielle de LALSTOP G46 WG (FR) : ANSES E-Phy Open Data",
+          "field": "evidence.sourceId",
+          "value": "FR-EPHY",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230771"
+          ]
+        },
+        {
+          "fact_id": "R-FR-EPHY-2230771#collectedAt",
+          "label": "Date de collecte de LALSTOP G46 WG (FR)",
+          "field": "evidence.collectedAt",
+          "value": "2026-10-10T01:35:02.740747+00:00",
+          "value_original": null,
+          "country_code": "FR",
+          "validation_status": "automatically_extracted",
+          "confidence": null,
+          "evidence_ids": [
+            "registration:R-FR-EPHY-2230771"
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "source_id": "CA-PPID",
+          "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
+          "collected_at": "2026-10-10T02:20:29.255371Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-CA-28820",
+          "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "DE-BVL",
+          "source_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/",
+          "collected_at": "2026-10-10T01:34:37.356822Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-DE-BVL-00B229-00",
+          "source_record_url": "https://psm-api.bvl.bund.de/ords/psm/api-v1/mittel/?offset=500&limit=500",
+          "is_synthetic": false
+        },
+        {
+          "source_id": "FR-EPHY",
+          "source_url": "https://www.data.gouv.fr/api/1/datasets/575e9fac88ee38072a640390/",
+          "collected_at": "2026-10-10T01:35:02.740747Z",
+          "validation_status": "automatically_extracted",
+          "evidence_id": "registration:R-FR-EPHY-2230771",
+          "source_record_url": "https://static.data.gouv.fr/resources/donnees-ouvertes-du-catalogue-e-phy-des-produits-phytopharmaceutiques-matieres-fertilisantes-et-supports-de-culture-adjuvants-produits-mixtes-et-melanges/20261007-225319/decisionamm-intrant-format-csv-20261008-utf8.zip",
+          "is_synthetic": false
+        }
+      ],
+      "warnings": [
+        "US : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "MX : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "BR : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "UY : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "BE : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "ES : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "IT : pays pas encore couvert par une source intégrée. Aucune conclusion possible.",
+        "5 homologation(s) ont plus de 3 usages : seuls les 3 premiers sont renvoyés (paramètre usesLimit), ex. R-CA-28820 : 30 usages."
+      ],
+      "disclaimer": "Pas une source réglementaire officielle. Validation Regulatory Affairs requise."
+    }
+  ],
+  "m365_integration": {
+    "mechanism": "api",
+    "documentation_url": "connector/power-platform.swagger.yaml"
+  },
+  "known_limitations": [
+    "Couverture limitée aux sources intégrées (FR-EPHY, CA-PPID, DE-BVL) : les autres pays sont renvoyés comme not_covered, ce qui n'est pas une preuve d'absence d'homologation.",
+    "Données issues d'extraits figés (fichiers ou API interrogés à une date donnée) : pas de mise à jour en continu.",
+    "Un même produit est retrouvé par nom, alias et substance active : les rapprochements « to_verify » sont signalés mais restent à valider par Regulatory Affairs.",
+    "Produits sœurs = hypothèses (to_verify) ; seuls les candidats avec une fiche officielle rattachée portent une preuve.",
+    "Aucune conversion d'unités de dose : deux unités différentes sont signalées comme une différence, pas comparées.",
+    "Mode sans clé IA : compréhension par mots-clés (noms de produits connus, quelques synonymes, français) et phrases par gabarit ; réponses en français uniquement. Le mode avec IA n'a pas été testé avec un vrai fournisseur (pas de clé).",
+    "Pas de validation humaine intégrée (route /reviews non implémentée). Prototype, pas une source réglementaire officielle."
+  ]
+}

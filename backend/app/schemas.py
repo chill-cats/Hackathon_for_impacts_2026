@@ -25,9 +25,10 @@ class ProductOut(Product):
 
 class ComparisonRowOut(ComparisonRow):
     """ComparisonRow du contrat + `cropGroup` / `targetGroup` (AJOUT optionnel : catégorie large suggérée par l'IA,
-    ex. "Powdery mildews", "Cereals", à vérifier). Propose d'ajouter ces champs au contrat."""
+    ex. "Powdery mildews", "Cereals", à vérifier) + `alignedBy` (clé d'alignement). Propose d'ajouter ces champs au contrat."""
     cropGroup: str | None = None
     targetGroup: str | None = None
+    alignedBy: Literal["eppo", "normalized_name", "original"] | None = None   # clé d'alignement de la ligne (hors contrat)
 
 
 class ComparisonResponseOut(ComparisonResponse):

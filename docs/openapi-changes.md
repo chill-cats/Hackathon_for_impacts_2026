@@ -86,7 +86,8 @@ Fournisseur et modèle viennent de `AI_BASE_URL` / `AI_MODEL` (cf. `.env`) et so
 - `present` : le pays a au moins un usage sur cette ligne.
 - `absent_in_extracted_uses` : le pays a un enregistrement mais aucun usage extrait sur cette ligne (peut être un trou d'extraction, d'où ce libellé prudent).
 - `registration_not_found`, `source_unavailable`, `not_covered` : repris de `coverage`.
-- `differsAcrossCountries` : la ligne n'est pas `present` partout, ou les couples (`doseValue`, `doseUnitNormalized`) diffèrent.
+- `differsAcrossCountries` : les couples (`doseValue`, `doseUnitNormalized`) diffèrent entre les seuls pays qui ont une valeur (un pays sans usage extrait n'est pas une différence ; son état est dans `cells[].state`).
+- `alignedBy` (hors contrat, à reporter par Damien) : clé d'alignement de la ligne, `eppo` (code EPPO), `normalized_name` (nom normalisé, insensible à la casse) ou `original` (valeur d'origine).
 
 **`/issues`**
 - `missing` : champ canonique attendu à `NULL` (statut, dose, culture, cible, numéro, dates).
