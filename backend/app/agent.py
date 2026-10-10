@@ -597,6 +597,59 @@ def run_registration_lookup(plan, c):
                   extra={"cites": cites})
 
 
+def names_of(registrations):
+    """Noms des produits (3 au plus, sans doublon) d'une liste d'homologations."""
+    return ", ".join(list(dict.fromkeys(x.get("productNameOriginal") or x["productId"] for x in registrations))[:3])
+
+
+def mention_found_countries(text, r, c):
+    """Garde-fou « registration_lookup » : tout pays dont la couverture est « found » doit apparaître dans le texte.
+
+    Le LLM résume et peut oublier un pays (ex. le Canada, trouvé seulement via un produit sœur). Pour chaque pays oublié,
+    le CODE ajoute une phrase factuelle avec ses preuves, et « produit sœur ou même substance, à vérifier » si
+    l'homologation n'a pas été trouvée par le nom exact du produit demandé."""
+    found, _ = coverage_split(r.coverage)
+
+    def missing(some_text):   # sans les citations : « registration:R-CA-1 » n'est pas une mention du Canada
+        mentioned = set(find_countries(CITATION.sub(" ", some_text)))
+        return [cc for cc in found if cc not in mentioned
+                and any(x["countryCode"] == cc for x in r.typed.get("registrations", []))]
+
+    if not missing(text):
+        return text
+    # La phrase ajoutée compte dans la limite de 3 phrases : on raccourcit le texte rédigé, mais jamais les phrases de
+    # couverture (pays non couverts / sans résultat / source indisponible), qui sont obligatoires.
+    sentences = split_sentences(text)
+    coverage_part = [x for x in sentences if "marché non couvert" in x or "source officielle indisponible" in x
+                     or nz.clean(x).startswith(SAFE_PREFIX)]
+    body = [x for x in sentences if x not in coverage_part]
+    if len(body) + 1 + len(coverage_part) > MAX_SENTENCES:
+        body = body[:max(1, MAX_SENTENCES - 1 - len(coverage_part))]
+    parts = [country_sentence(cc, r, c) for cc in missing(" ".join(body))]   # recalculé : le raccourcissement a pu retirer des pays
+    return " ".join(body + ["Également trouvé : " + " ; ".join(parts) + "."] + coverage_part)
+
+
+def country_sentence(cc, r, c):
+    """« CA : 2 homologations (2 active(s)) — PRESTOP, PRESTOP WG (produit sœur ou même substance, à vérifier) [ids] »"""
+    regs = [x for x in r.typed["registrations"] if x["countryCode"] == cc]
+    detail = ", ".join(f"{k} {STATUS_FR.get(s, s)}" for s, k in r.counters["statusByCountry"][cc].items())
+    by_name = [x for x in regs if (x.get("matchedVia") or {}).get("matchedOn") in (None, "commercial_name")]
+    by_other = [x for x in regs if x not in by_name]   # trouvé par la substance active ou un alias : sœur / même substance
+    ids = list(dict.fromkeys(i for f in c.facts if f["countryCode"] == cc for i in f["evidenceIds"]))[:2]
+    if not ids:   # faits tronqués (MAX_FACTS) : on rattache quand même la preuve de l'homologation à la réponse
+        ev = regs[0]["evidence"]
+        c.evidence.setdefault(ev["evidenceId"], ev)
+        c.facts.append({"factId": f"{regs[0]['registrationId']}#status", "label": f"Statut de {names_of(regs[:1])} ({cc})",
+                        "field": "registration.statusNormalized", "value": regs[0]["statusNormalized"],
+                        "valueOriginal": regs[0].get("statusOriginal"), "productId": regs[0]["productId"],
+                        "countryCode": cc, "evidenceIds": [ev["evidenceId"]], "validationStatus": fact_validation(regs[0])})
+        ids = [ev["evidenceId"]]
+    shown = [names_of(by_name)] if by_name else []
+    if by_other:
+        shown.append(f"{names_of(by_other)} (produit sœur ou même substance, à vérifier)")
+    return f"{cc} : {plural(len(regs), 'homologation', 'homologations')} ({detail}) — {' ; '.join(shown)} {cite(ids)}"
+
+
 def run_use_comparison(plan, c):
     countries = plan.countries[:MAX_COUNTRIES]
     data = services.compare_uses(plan.product_id, countries, plan.crop, plan.target, False, 200, 0)
@@ -1186,6 +1239,8 @@ def ask(body):
     text, check_warnings, blocked = verify_text(text, c.facts, context, r.coverage, plan.intent,
                                                 require_citation=written_by_llm)
     warnings += check_warnings
+    if plan.intent == "registration_lookup" and not blocked:
+        text = mention_found_countries(text, r, c)
     if plan.intent == "market_opportunity" and "aide a l'analyse" not in nz.clean(text).replace("’", "'"):
         text = f"{text} {OPPORTUNITY_REMINDER}"   # rappel TOUJOURS présent, même si le texte vient du LLM ou a été bloqué
     note = r.extra.get("level_note")   # bascule automatique au niveau culture : toujours dite, ajoutée après les contrôles

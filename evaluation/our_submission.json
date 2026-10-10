@@ -1,10 +1,10 @@
 {
   "submission_id": "lpc-regulatory-agent",
-  "generated_at": "2026-10-10T07:15:55Z",
+  "generated_at": "2026-10-10T08:25:35Z",
   "answers": [
     {
       "test_id": "T01",
-      "answer": "Au Canada, le produit PRESTOP est indiqué comme actif avec le numéro d’homologation 28820, mais ce statut provient d’une extraction automatique et reste à vérifier [registration:R-CA-28820]. En Allemagne et en France, le produit LALSTOP G46 WG apparaît également comme actif, ces informations étant elles aussi automatiquement extraites et non confirmées [registration:R-DE-BVL-00B229-00] [registration:R-FR-EPHY-2230771]. US, MX, BR, UY, BE, ES, IT : marché non couvert par le prototype (aucune source officielle intégrée).",
+      "answer": "Au Canada, le produit apparaît avec un statut actif et le numéro d’homologation 28820, mais ce statut provient d’une extraction automatique et n’est pas confirmé [registration:R-CA-28820]. En Allemagne et en France, il est également indiqué comme actif (numéros 00B229‑00 et 2230771), toutefois ces informations sont issues d’extractions automatiques et restent à vérifier [registration:R-DE-BVL-00B229-00] [registration:R-FR-EPHY-2230771]. US, MX, BR, UY, BE, ES, IT : marché non couvert par le prototype (aucune source officielle intégrée).",
       "facts": [
         {
           "fact_id": "R-CA-28820#status",
@@ -537,7 +537,7 @@
     },
     {
       "test_id": "T02",
-      "answer": "Les données canadiennes ne précisent pas la cible : comparaison au niveau de la culture. Le statut actif de PRESTOP au Canada et de LALSTOP G46 WG en France provient de données extraites automatiquement et n’est pas encore validé [registration:R-CA-28820] [registration:R-FR-EPHY-2230771]. Une différence d’usage pour la fraise entre le Canada et la France est indiquée [use:U-FR-EPHY-2120177-06d88aa5112161d25386d9087bf01ce8c2ebcf4cb8f42b69cdc7fda7ad8f93c6-1] [use:U-CA-32404-C23].",
+      "answer": "Les données canadiennes ne précisent pas la cible : comparaison au niveau de la culture. Au Canada, le produit PRESTOP est indiqué comme actif, mais ce statut provient d’une extraction automatique et n’est pas validé [registration:R-CA-28820]. En France, le produit LALSTOP G46 WG est également indiqué comme actif, statut extrait automatiquement et donc non confirmé [registration:R-FR-EPHY-2230771]. Une différence d’usage pour la fraise est relevée entre les deux pays [use:U-FR-EPHY-2120177-06d88aa5112161d25386d9087bf01ce8c2ebcf4cb8f42b69cdc7fda7ad8f93c6-1, use:U-CA-32404-C23].",
       "facts": [
         {
           "fact_id": "R-CA-28820#status",
@@ -1265,7 +1265,7 @@
     },
     {
       "test_id": "T03",
-      "answer": "Les statuts de validation des enregistrements R‑CA‑28820, R‑DE‑BVL‑00B229‑00 et R‑FR‑EPHY‑2120177 sont incertains, car ils sont indiqués comme « automatically_extracted » [registration:R-CA-28820][registration:R-DE-BVL-00B229-00][registration:R-FR-EPHY-2120177]. De même, les enregistrements R‑CA‑32404 et R‑DE‑BVL‑027495‑00 présentent un statut de validation non validé et donc incertain [registration:R-CA-32404][registration:R-DE-BVL-027495-00]. Tous ces champs de validation sont donc à vérifier.",
+      "answer": "Les statuts de validation des enregistrements R‑CA‑28820, R‑DE‑BVL‑00B229‑00 et R‑FR‑EPHY‑2120177 sont incertains car ils proviennent d’extractions automatiques [registration:R-CA-28820] [registration:R-DE-BVL-00B229-00] [registration:R-FR-EPHY-2120177]. De même, les statuts de validation des enregistrements R‑CA‑32404 et R‑DE‑BVL‑027495‑00 restent non validés et donc incertains [registration:R-CA-32404] [registration:R-DE-BVL-027495-00].",
       "facts": [
         {
           "fact_id": "not_validated:registration:R-CA-28820:validationStatus",
@@ -1605,7 +1605,7 @@
     },
     {
       "test_id": "T04",
-      "answer": "LALFRESH S apparaît comme un candidat produit sœur, mais cette hypothèse reste à vérifier [registration:R-FR-EPHY-2230264]. PRESTOP (WP) ainsi que PRESTOP (sans précision) sont également proposés comme produits sœurs, toutefois leur statut n’est pas confirmé [registration:R-DE-BVL-027495-00] [registration:R-CA-28820]. PRESTOP 4B et PRESTOP WG figurent parmi les autres candidats, mais ils demeurent à confirmer [registration:R-FR-EPHY-2150847] [registration:R-CA-32404].",
+      "answer": "Les produits LALFRESH S, PRESTOP (WP) et PRESTOP 4B sont proposés comme candidats à confirmer comme produits sœurs, mais ces hypothèses restent à vérifier [registration:R-FR-EPHY-2230264] [registration:R-DE-BVL-027495-00] [registration:R-FR-EPHY-2150847]. Le produit PRESTOP, identifié tant en Canada (reg. 28820) qu’en France (reg.",
       "facts": [
         {
           "fact_id": "sister:A-SIS-d19bbde7aa66c1b1",
@@ -1737,7 +1737,7 @@
     },
     {
       "test_id": "T05",
-      "answer": "La source officielle de PRESTOP au Canada est Health Canada PPID, extraite automatiquement et non encore validée [registration:R-CA-28820]. Pour le produit LALSTOP G46 WG, la source officielle en Allemagne est BVL PSM API et en France ANSES E‑Phy Open Data, toutes deux issues d’extractions automatiques non validées [registration:R-DE-BVL-00B229-00] [registration:R-FR-EPHY-2230771]. Les dates de collecte indiquées pour le Canada et l’Allemagne proviennent également d’extractions automatiques et restent à vérifier [registration:R-CA-28820] [registration:R-DE-BVL-00B229-00].",
+      "answer": "La source officielle de PRESTOP au Canada est le PPID de Health Canada, avec une date de collecte indiquée le 2026‑10‑10, mais ces informations sont extraites automatiquement et non validées [registration:R-CA-28820]. En Allemagne, la source officielle de LALSTOP G46 WG est le BVL PSM API, collectée le 2026‑10‑10, et en France la source officielle est l’ANSES E‑Phy Open Data ; ces données sont également extraites automatiquement et non confirmées [registration:R-DE-BVL-00B229-00][registration:R-FR-EPHY-2230771]. US, MX, BR, UY, BE, ES, IT : marché non couvert par le prototype (aucune source officielle intégrée).",
       "facts": [
         {
           "fact_id": "R-CA-28820#source",

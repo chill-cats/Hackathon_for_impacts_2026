@@ -32,16 +32,17 @@ ne remplace la lecture de la source officielle ni la décision de Regulatory Aff
   expert (traçable dans `field_evidence`).
 
 ## 2. Canada : aucune ligne d'usage avec culture ET cible
-- **Constat** : sur les 125 431 usages canadiens, 60 437 ont une culture, 64 994 ont une cible, **0 ont les deux**. Dans les
-  données telles que chargées, la culture et le ravageur/maladie sont sur des lignes séparées. Les usages retirés (37 126)
+- **Constat** : sur les 125 431 usages canadiens, 60 437 ont une culture, 64 994 ont une cible, **0 ont les deux**. Cause
+  confirmée par Dyland : dans le PPID, les cultures (« Sites of Use ») et les ravageurs (« Pests ») sont **deux listes
+  séparées par produit**, sans lien entre elles. Le lien culture × cible n'existe donc pas dans la source canadienne. Les usages retirés (37 126)
   sont dans le même cas (16 025 avec culture, 21 101 avec cible, 0 les deux).
 - **Impact LPC** : impossible de dire « sur la tomate contre les acariens, tel produit est autorisé au Canada ». L'écran
   « Opportunités » (`/opportunities`) renvoie donc une liste vide pour le Canada, et la comparaison par couple
   culture × cible ne marche que pour la France et l'Allemagne. Relier une culture à une cible serait inventer un lien :
   nous ne le faisons pas.
-- **Piste** : vérifier avec la source (fichiers PPID) s'il existe un identifiant qui relie la culture à la cible, puis
-  corriger l'adaptateur canadien. Sinon, travailler au Canada par culture seule ou par cible seule. Le code qui exploite
-  les usages retirés du Canada est déjà prêt.
+- **Piste** : au Canada, travailler par culture seule ou par cible seule (jamais en reliant les deux), ou lire les
+  étiquettes officielles (PDF) où le lien figure en texte, avec validation par un expert. Le code qui exploite les usages
+  retirés du Canada est déjà prêt et servira si la source change.
 
 ## 3. France : produits retirés sans usages ni date
 - **Constat** : 11 882 homologations retirées sur 13 569, **toutes sans usage**, et **aucune** homologation française
