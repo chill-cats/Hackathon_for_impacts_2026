@@ -19,4 +19,4 @@ COPY data data
 # Port d'écoute : BACK_PORT (3000 par défaut). DATABASE_URL et API_KEY viennent de l'environnement (.env).
 ENV BACK_PORT=3000
 EXPOSE 3000
-CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${BACK_PORT:-3000}"]
+CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${BACK_PORT:-3000} --workers 1"]
