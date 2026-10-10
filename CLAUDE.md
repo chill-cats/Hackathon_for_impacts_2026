@@ -28,7 +28,7 @@ C'est une preuve de concept, pas un système réglementaire officiel.
 10. Ne pas contourner authentification, quotas ou restrictions des sources ; ne pas scraper si une API/un téléchargement officiel existe.
 
 ## Architecture
-sources officielles → scripts/ingest_xx.py (coéquipiers) → data/incoming/xx_*.csv (format du starter kit)
+sources officielles → backend/etl/adapters/{france,germany,canada}/ (écrivent directement en base)
 → backend/etl/normalize.py (normalisation EPPO / ingrédients / produits sœurs, sans base)
 → backend/etl/load_db.py (charge les CSV dans PostgreSQL)
 → PostgreSQL (serveur d'équipe, URL dans DATABASE_URL du .env ; jamais d'identifiants dans le code).
@@ -51,41 +51,33 @@ Ne pas toucher frontend/ (sauf demande explicite). Ne pas modifier les fichiers 
 
 ## Environnement
 Windows / PowerShell, Python 3.11+, venv .venv. Équipe débutante : code simple, commenté, expliqué.
+Sous Windows : lancer les scripts avec PYTHONIOENCODING=utf-8 si erreur d'affichage.
 
-## État actuel (mis à jour 03:00)
-- Contrat API de référence : openapi.proposed.yaml (v0.2.1, Damien), expliqué dans docs/openapi-changes.md. schema/openapi.yaml = contrat d'origine, compatible, ne pas modifier.
-- API faite : backend/app/ (main.py, services.py, db.py lecture seule, models.py GÉNÉRÉ par datamodel-codegen, schemas.py). Lancement : uvicorn backend.app.main:app --port 3000. Tests : tests/test_api.py.
-- ETL fait : backend/etl/normalize.py et load_db.py (--normalize-db pour normaliser les lignes déjà en base). Schéma réel : docs/db_schema.md.
-- Base partagée : données réelles FR-EPHY (~13 500 produits), CA-PPID, DE-BVL. Données de test = is_synthetic=true (P-TEST-*), masquées par défaut.
-- Adaptateurs des coéquipiers : backend/etl/adapters/ (base.py commun, fr_ephy.py, ca_ppid.py, de_bvl.py), écrivent directement en base.
-- product_aliases.related_product_id (migration db/migrations/001_…) : lien EXACT vers le produit sœur ; ne JAMAIS joindre produits et sœurs par le nom.
-- Pas de date d'expiration côté FR : utiliser status_normalized = withdrawn.
-- Pas encore de clé IA : tout doit marcher en mode sans clé (mots-clés).
+## État actuel (mis à jour 07:30) — fait foi
+### Données (base PostgreSQL partagée)
+- FR-EPHY : ~13 500 homologations (1 687 actives avec 18 023 usages ; 11 882 retirées SANS usages ; aucune date d'expiration ; tous les usages "Autorisé").
+- DE-BVL : ~2 165 homologations, 82 239 usages ; status_normalized = unknown partout (correction en cours, Nhan).
+- CA-PPID : ~2 100 homologations, 88 305 usages dont 43 893 avec cible, AUCUNE dose (limite de source).
+- Aucune donnée de test en base (rechargé avec --no-test). P-DEMO-COMP-01 (kit) est is_synthetic.
+- product_aliases.related_product_id : lien EXACT vers le produit sœur ; ne JAMAIS joindre produits et sœurs par le nom.
+- ⚠️ Ne JAMAIS exécuter db/schema.sql ni db/reset_DANGER.sql sur la base partagée. Aucun DELETE/DROP/TRUNCATE. db/schema.sql est sans DROP (testé par tests/test_schema_sql.py).
 
-## État actuel (mis à jour 04:15)
-- Contrat API de référence : openapi.proposed.yaml (v0.2.1, Damien), expliqué dans docs/openapi-changes.md. schema/openapi.yaml = contrat d'origine, ne pas modifier. Champs ajoutés hors contrat (à reporter par Damien) : matchedVia sur /products, generator.mode sur /ask.
-- API : backend/app/ (main.py, services.py, db.py lecture seule, models.py GÉNÉRÉ par datamodel-codegen, schemas.py). Lancement : uvicorn backend.app.main:app --port 3000. Routes à la racine ET sous /api.
-- Agent /ask : backend/app/agent.py + llm.py (pipeline 6 étapes, garde-fous dans le code). Sans clé IA → mode "keyword". scripts/run_gold.py donne 70/70 sur les vraies données.
-- Tests : `python -m pytest -q` depuis la racine (pytest.ini limite la collecte à tests/).
-- ETL : backend/etl/normalize.py et load_db.py. Ordre de rechargement : `python backend/etl/load_db.py --no-test` (références : sources, produits pilotes LPC, dictionnaires) → adaptateurs des pays → `python backend/etl/load_db.py --normalize-db`.
-- Adaptateurs : backend/etl/adapters/france/ (Nhan), germany/ (Hanane), canada/ (Dyland) ; chacun a son propre base.py ; ils écrivent directement en base.
-- Base partagée réinitialisée à 03:14 puis rechargée : FR-EPHY (~13 500 homologations), DE-BVL (~2 100), CA-PPID (5, uniquement produits contenant nos ingrédients). AUCUNE donnée de test en base (rechargé avec --no-test).
-- product_aliases.related_product_id existe : lien EXACT vers le produit sœur ; ne JAMAIS joindre produits et sœurs par le nom.
-- Normalisation : mappings LPC trop petits → dictionnaire IA data/ai_term_mapping.csv (400 valeurs FR/DE → normalized_en + group_en, method "ai_suggested", review_status "to_verify"), utilisé par normalize.py en second recours (LPC prioritaire). Après `--normalize-db` : lignes normalisées cultures 25 % → 94 %, cibles 3 % → 92 %. group_en est dans field_evidence (crop_group / target_group) et exposé par /compare (cropGroup / targetGroup, hors contrat, à reporter par Damien). Voir docs/ai_term_mapping.md.
-- Pas de date d'expiration côté FR : utiliser status_normalized = withdrawn.
-- ⚠️ Ne JAMAIS exécuter db/schema.sql ni db/reset_DANGER.sql sur la base partagée. Aucun DELETE/DROP/TRUNCATE.
-- Frontend : Damien travaille sur une branche séparée, fusion dans main prévue avant 11:00.
+### Chargement et normalisation
+- Adaptateurs (écrivent directement en base) : backend/etl/adapters/france/ (Nhan), germany/ (Hanane, repris par Nhan), canada/ (Dyland).
+- Ordre de rechargement : `python backend/etl/load_db.py --no-test` (sources, produits pilotes LPC, dictionnaires) → adaptateurs → `python backend/etl/load_db.py --normalize-db`.
+- Normalisation : mappings LPC (prioritaires) puis dictionnaire IA data/ai_term_mapping.csv (method ai_suggested, review_status to_verify). Couverture actuelle des lignes : cultures 69 %, cibles 64 % (baisse due aux nouveaux termes anglais CA → extension du dictionnaire prévue). Voir docs/ai_term_mapping.md.
 
-- IA : fournisseur Groq configuré dans .env (AI_PROVIDER=groq, AI_BASE_URL, AI_MODEL) → /ask en mode "llm" ; sans clé → mode "keyword".
-- Frontend Angular fusionné dans main (branche frontend de Damien). /compare expose cropGroup/targetGroup (hors contrat, à reporter par Damien).
-- Groq gratuit = limites de débit : llm.py fait des nouvelles tentatives + modèle de secours AI_FALLBACK_MODEL + cache ; si tout échoue → mode keyword (jamais de plantage).
-- /ask : 5/5 réponses en mode llm (Groq) avec retry, AI_FALLBACK_MODEL et cache ; réponses limitées à 3 phrases ; phrases de couverture distinctes (not_found / not_covered / source_unavailable).
-- /compare : alignedBy (eppo | normalized_name | original), rowsComparable. Les usages CA n'ont presque jamais de cible → comparaison FR/CA au niveau culture (granularity=crop, en cours). Meilleures comparaisons culture × cible : FR ↔ DE.
-- docker-compose : MySQL supprimé ; postgres local optionnel sous le profil "localdb".
-- Sous Windows : lancer les scripts avec PYTHONIOENCODING=utf-8 si erreur d'affichage.
-- /compare granularity=crop (alignement par culture si les cibles manquent, ex. CA). Cas de démo réels dans docs/demo_cases.md : meilleur produit multi-pays = LALGUARD M52 OD (5 cultures communes FR/DE et CA/DE) ; produits sœurs = G46 (PRESTOP en CA/FR/DE) ; FR/CA = fraise (FRAAN).
-- Homologations FR retirées : aucun usage en base ; statut DE absent (à corriger par Hanane). "Opportunité marché" basée sur source.etat usage (field_evidence), en cours.
-- db/schema.sql sécurisé (aucun DROP), testé par tests/test_schema_sql.py.
-- Déploiement : image backend sur ttl.sh (public, expire ~18:40), AUCUN secret dedans (.dockerignore exclut .env, contrôle fait). Procédure : docs/deploy.md. Dans le conteneur, DATABASE_URL utilise l'IP publique du serveur (localhost = le conteneur). L'API tourne sur le serveur de la base (Nhan).
-- Opportunité marché (hors contrat, à reporter par Damien) : GET /opportunities (backend/app/opportunities.py) = couples culture × cible avec beaucoup d'usages chimiques actifs et peu de biologiques ; score = usages chimiques / (1 + biologiques). AUCUN usage retiré n'existe dans les sources (field_evidence « source.etat usage » = « Autorisé » partout) : le classement montre l'état actuel, jamais un recul. Catégorie biologique/chimique = règle sur le nom de la substance active (hypothèse, categoryMethod rule_based). « Retraits » = seulement produits retirés de même substance, sans lien culture × cible. /ask : intention market_opportunity. Détail : docs/openapi-changes.md (fin), docs/demo_cases.md (section d).
-- CA est maintenant chargé en entier (~2 100 homologations, ~88 000 usages) mais seulement ~5 % ont une culture normalisée et ~2 % une cible : les opportunités CA sont quasi absentes tant que la normalisation n'est pas relancée.
+### API et agent
+- Contrat : openapi.proposed.yaml (v0.2.1, Damien) + docs/openapi-changes.md. Hors contrat (à reporter par Damien) : matchedVia (/products), generator.mode (/ask), cropGroup/targetGroup, alignedBy, rowsComparable, granularity (/compare), /opportunities.
+- backend/app/ : main.py, services.py, db.py (lecture seule), models.py (GÉNÉRÉ par datamodel-codegen), schemas.py, agent.py, llm.py. Routes à la racine ET sous /api. Port BACK_PORT (3000).
+- /compare : alignement eppo → normalized_name → original ; granularity=use|crop. Meilleurs cas de démo : docs/demo_cases.md (LALGUARD M52 OD multi-pays ; G46 pour les produits sœurs).
+- /ask : pipeline 6 étapes, garde-fous dans le code ; Groq (AI_MODEL=openai/gpt-oss-120b, AI_FALLBACK_MODEL) avec retry + cache ; 3 phrases max ; phrases distinctes not_found / not_covered / source_unavailable ; sans clé → mode keyword. run_gold.py : 70/70, 5/5 en mode llm.
+- /opportunities fait (backend/app/opportunities.py) + intention /ask market_opportunity : "espaces libres pour le biocontrôle" par culture × cible et pays (usages chimiques actifs vs biologiques, score, produits LPC/sœurs autorisés, lpcOnly=true). Classification biologique/chimique par règle (hypothèse ; "chemical" = non identifié comme micro-organisme). withdrawnSameSubstance = produits retirés de même substance, SANS lien culture × cible (FR seulement). Aucun usage retiré n'existe dans les sources. Lent à froid (8–15 s), cache 2 min.
+- Tests : `python -m pytest -q` depuis la racine.
+
+### Déploiement et frontend
+- API en production : http://64.176.83.254:3000/api (image construite SUR le serveur par Nhan). Elle lit la base en direct ; après un changement de CODE ou de data/ → Nhan met à jour (git pull + docker build + docker rm -f lpc-api + docker run). Voir docs/deploy.md. API ouverte (API_KEY vide).
+- Aucun secret dans git ni dans les images (.dockerignore exclut .env).
+- docker-compose : sans MySQL ; postgres local optionnel (profil "localdb").
+- Frontend Angular (Damien) fusionné dans main ; doit pointer vers l'API du serveur.
+- Phrase de démo : Tomate × taches brunes (FR) = 51 usages chimiques vs 4 biologiques, PRESTOP (sœur de G46) autorisé → GET /opportunities?country=FR&lpcOnly=true&limit=5
