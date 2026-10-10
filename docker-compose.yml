@@ -32,6 +32,7 @@ services:
       context: ./frontend              # dossier contenant le Dockerfile
       args:
         FRONT_API_URL: ${FRONT_API_URL:-/api}
+        BACK_URL: ${BACK_URL:-}          # renseigné = le navigateur appelle le back en direct (BACK_URL/api)
     env_file:
       - .env
     environment:

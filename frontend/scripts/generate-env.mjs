@@ -23,8 +23,12 @@ if (existsSync(rootEnvFile)) {
 
 const isTrue = (value) => ['1', 'true', 'yes', 'on'].includes(String(value ?? '').toLowerCase());
 
+// Si BACK_URL est renseigné, le navigateur appelle le back DIRECTEMENT (BACK_URL + /api), sans passer par le proxy nginx.
+// Le back autorise le CORS, donc pas de souci côté navigateur. Sinon : FRONT_API_URL (par défaut /api, via nginx).
+const backUrl = (process.env.BACK_URL ?? '').trim().replace(/\/+$/, '');
+
 const environment = {
-  apiUrl: process.env.FRONT_API_URL ?? '/api',
+  apiUrl: backUrl ? `${backUrl}/api` : (process.env.FRONT_API_URL ?? '/api'),
   // Mode mock : le front ajoute l'en-tête `Prefer: example=<nom>` pour choisir la réponse de Prism.
   mock: process.argv.includes('--mock') || isTrue(process.env.FRONT_MOCK),
   // Mode démo hors ligne : rejoue les exemples fictifs sans aucun serveur (filet de sécurité du pitch).

@@ -17,6 +17,9 @@ COPY . .
 # Valeurs venant du .env racine, transmises par docker-compose (build args)
 ARG FRONT_API_URL=/api
 ENV FRONT_API_URL=$FRONT_API_URL
+# BACK_URL renseigné = le navigateur appelle le back en direct (BACK_URL/api), sans passer par le proxy nginx
+ARG BACK_URL=""
+ENV BACK_URL=$BACK_URL
 RUN node scripts/generate-env.mjs && pnpm exec ng build
 
 # --- Étape 2 : serveur nginx -------------------------------------------------
