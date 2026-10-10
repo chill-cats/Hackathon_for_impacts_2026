@@ -51,6 +51,25 @@ describe('AnswerPage : le cadre commun', () => {
     }
   });
 
+  it('le sommaire reprend les titres de la réponse et défile vers la section choisie', async () => {
+    const { element, http, fixture } = await pageWith('registration_lookup');
+    http.match(() => true);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    fixture.detectChanges();
+
+    const links = [...element.querySelectorAll<HTMLAnchorElement>('[data-toc-nav] a')];
+    const labels = links.map((link) => textOf(link));
+    expect(labels).toContain('Conclusion');
+    expect(labels).toContain('Homologations');
+
+    const target = element.querySelector<HTMLElement>(links[1].getAttribute('href')!);
+    expect(target).not.toBeNull();
+    const scroll = vi.fn();
+    target!.scrollIntoView = scroll;
+    links[1].click();
+    expect(scroll).toHaveBeenCalledOnce();
+  });
+
   it('la chaîne de démo T01 → T05 passe par la première suggestion de chaque réponse', () => {
     const chain: AskExample[] = ['registration_lookup', 'use_comparison', 'data_quality', 'sister_product'];
     const next: AskExample[] = ['use_comparison', 'data_quality', 'sister_product', 'source_lookup'];

@@ -11,6 +11,7 @@ import { AnswerStore } from '../../core/state/answer.store';
 import { EvidencePanel } from '../../shared/evidence-panel';
 import { AppFooter } from './app-footer';
 import { AppHeader } from './app-header';
+import { AnswerToc } from './answer-toc';
 import { AskBar } from './ask-bar';
 import { Hero } from './hero';
 import { ThinkingStatus } from './thinking-status';
@@ -53,6 +54,7 @@ type TemplateKind =
     Hero,
     ThinkingStatus,
     AskBar,
+    AnswerToc,
     Understood,
     Conclusion,
     SearchScope,
@@ -74,14 +76,22 @@ type TemplateKind =
       <app-hero />
     }
 
-    <main class="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12" [class.pt-8]="store.status() !== 'idle'">
-      <div class="relative z-10 w-full" [class.-mt-8]="store.status() === 'idle'">
+    <main
+      class="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12 xl:grid xl:max-w-[80rem] xl:grid-cols-[13rem_minmax(0,1fr)] xl:gap-x-8"
+      [class.pt-8]="store.status() !== 'idle'"
+    >
+      <div class="relative z-10 w-full xl:col-span-2" [class.-mt-8]="store.status() === 'idle'">
         <app-ask-bar />
       </div>
 
       @switch (store.status()) {
         @case ('loading') {
-          <section class="flex flex-col gap-3" role="status" aria-busy="true" data-state="loading">
+          <section
+            class="flex flex-col gap-3 xl:col-start-2"
+            role="status"
+            aria-busy="true"
+            data-state="loading"
+          >
             <app-thinking-status [sources]="sourceNames()" />
             <div hlmSkeleton class="h-7 w-3/4"></div>
             <div hlmSkeleton class="h-5 w-1/2"></div>
@@ -89,12 +99,25 @@ type TemplateKind =
           </section>
         }
         @case ('error') {
-          <div hlmAlert variant="destructive" data-state="error" [attr.data-error]="store.errorKind()">
+          <div
+            hlmAlert
+            variant="destructive"
+            class="xl:col-span-2"
+            data-state="error"
+            [attr.data-error]="store.errorKind()"
+          >
             <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
             <h2 hlmAlertTitle>{{ i18n.t(errorTitleKey()) }}</h2>
             <p hlmAlertDescription>
               {{ i18n.t(errorBodyKey()) }}
-              <button hlmBtn variant="secondary" size="sm" type="button" class="mt-2" (click)="store.retry()">
+              <button
+                hlmBtn
+                variant="secondary"
+                size="sm"
+                type="button"
+                class="mt-2"
+                (click)="store.retry()"
+              >
                 <ng-icon name="lucideRefreshCw" aria-hidden="true" />{{ i18n.t('state.retry') }}
               </button>
             </p>
@@ -102,78 +125,103 @@ type TemplateKind =
         }
         @case ('success') {
           @if (store.answer(); as answer) {
-            <app-understood [answer]="answer" />
-            <app-conclusion [answer]="answer" />
-            <app-search-scope [coverage]="answer.coverage" />
+            <!-- Sommaire latéral (desktop) : généré à partir des titres de la réponse -->
+            <aside class="hidden xl:block" data-section="toc">
+              <div class="sticky top-6">
+                <app-answer-toc rootId="answer-content" />
+              </div>
+            </aside>
 
-            <!-- Bloc 6 : le gabarit propre à l'intent -->
-            <section class="flex flex-col gap-3" [attr.data-template]="template() ?? 'message'">
-              @switch (template()) {
-                @case ('registration_lookup') {
-                  <app-registration-lookup [answer]="answer" />
-                }
-                @case ('use_comparison') {
-                  @if (answer.comparison; as comparison) {
-                    <app-use-comparison [comparison]="comparison" />
+            <div id="answer-content" class="flex min-w-0 flex-col gap-6">
+              <app-understood [answer]="answer" />
+              <app-conclusion [answer]="answer" />
+              <app-search-scope [coverage]="answer.coverage" />
+
+              <!-- Bloc 6 : le gabarit propre à l'intent -->
+              <section
+                class="flex flex-col gap-3"
+                [attr.data-template]="template() ?? 'message'"
+                [attr.data-toc]="templateLabel()"
+              >
+                @switch (template()) {
+                  @case ('registration_lookup') {
+                    <app-registration-lookup [answer]="answer" />
+                  }
+                  @case ('use_comparison') {
+                    @if (answer.comparison; as comparison) {
+                      <app-use-comparison [comparison]="comparison" />
+                    }
+                  }
+                  @case ('data_quality') {
+                    <app-data-quality [answer]="answer" />
+                  }
+                  @case ('sister_product') {
+                    <app-sister-product [answer]="answer" />
+                  }
+                  @case ('source_lookup') {
+                    <app-source-lookup [answer]="answer" />
+                  }
+                  @case ('ingredient_search') {
+                    <app-ingredient-search [answer]="answer" />
+                  }
+                  @case ('expiry_watch') {
+                    <app-expiry-watch [answer]="answer" />
                   }
                 }
-                @case ('data_quality') {
-                  <app-data-quality [answer]="answer" />
-                }
-                @case ('sister_product') {
-                  <app-sister-product [answer]="answer" />
-                }
-                @case ('source_lookup') {
-                  <app-source-lookup [answer]="answer" />
-                }
-                @case ('ingredient_search') {
-                  <app-ingredient-search [answer]="answer" />
-                }
-                @case ('expiry_watch') {
-                  <app-expiry-watch [answer]="answer" />
-                }
-              }
-              @if (showMessage()) {
-                <app-message-template [answer]="answer" (clarify)="clarify($event)" />
-              }
-            </section>
-
-            <!-- Bloc 7 : avertissements, jamais repliés -->
-            @if (answer.warnings.length > 0) {
-              <section class="flex flex-col gap-2" aria-labelledby="warnings-title" data-section="warnings">
-                <h2 id="warnings-title" class="type-caption text-ink-muted">{{ i18n.t('warnings.heading') }}</h2>
-                @for (warning of answer.warnings; track warning) {
-                  <div hlmAlert variant="warning">
-                    <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
-                    <p hlmAlertDescription>{{ warning }}</p>
-                  </div>
+                @if (showMessage()) {
+                  <app-message-template [answer]="answer" (clarify)="clarify($event)" />
                 }
               </section>
-            }
 
-            <!-- Bloc 8 : la suite -->
-            @if (answer.suggestedQuestions?.length) {
-              <section class="flex flex-col gap-2" aria-labelledby="follow-title" data-section="follow-up">
-                <h2 id="follow-title" class="type-caption text-ink-muted">{{ i18n.t('follow.heading') }}</h2>
-                <ul class="flex flex-wrap gap-2">
-                  @for (suggestion of answer.suggestedQuestions; track suggestion.question) {
-                    <li>
-                      <button
-                        hlmBtn
-                        variant="outline"
-                        size="sm"
-                        type="button"
-                        [attr.data-intent]="suggestion.intent"
-                        (click)="follow(suggestion)"
-                      >
-                        {{ suggestion.label }}
-                        <ng-icon name="lucideArrowRight" aria-hidden="true" />
-                      </button>
-                    </li>
+              <!-- Bloc 7 : avertissements, jamais repliés -->
+              @if (answer.warnings.length > 0) {
+                <section
+                  class="flex flex-col gap-2"
+                  aria-labelledby="warnings-title"
+                  data-section="warnings"
+                >
+                  <h2 id="warnings-title" class="type-caption text-ink-muted">
+                    {{ i18n.t('warnings.heading') }}
+                  </h2>
+                  @for (warning of answer.warnings; track warning) {
+                    <div hlmAlert variant="warning">
+                      <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+                      <p hlmAlertDescription>{{ warning }}</p>
+                    </div>
                   }
-                </ul>
-              </section>
-            }
+                </section>
+              }
+
+              <!-- Bloc 8 : la suite -->
+              @if (answer.suggestedQuestions?.length) {
+                <section
+                  class="flex flex-col gap-2"
+                  aria-labelledby="follow-title"
+                  data-section="follow-up"
+                >
+                  <h2 id="follow-title" class="type-caption text-ink-muted">
+                    {{ i18n.t('follow.heading') }}
+                  </h2>
+                  <ul class="flex flex-wrap gap-2">
+                    @for (suggestion of answer.suggestedQuestions; track suggestion.question) {
+                      <li>
+                        <button
+                          hlmBtn
+                          variant="outline"
+                          size="sm"
+                          type="button"
+                          [attr.data-intent]="suggestion.intent"
+                          (click)="follow(suggestion)"
+                        >
+                          {{ suggestion.label }}
+                          <ng-icon name="lucideArrowRight" aria-hidden="true" />
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                </section>
+              }
+            </div>
           }
         }
       }
@@ -208,7 +256,11 @@ export class AnswerPage {
   /** Le gabarit est choisi par `intent` seulement (et reste vide si l'IA demande une précision ou sort du périmètre). */
   protected readonly template = computed<TemplateKind | null>(() => {
     const answer = this.store.answer();
-    if (!answer || answer.answerStatus === 'needs_clarification' || answer.answerStatus === 'out_of_scope') {
+    if (
+      !answer ||
+      answer.answerStatus === 'needs_clarification' ||
+      answer.answerStatus === 'out_of_scope'
+    ) {
       return null;
     }
     switch (answer.intent) {
@@ -225,6 +277,12 @@ export class AnswerPage {
     }
   });
 
+  /** Titre du gabarit dans le sommaire (vide : le gabarit n'est pas listé, son message a son propre titre). */
+  protected readonly templateLabel = computed(() => {
+    const kind = this.template();
+    return kind ? this.i18n.t(`toc.result.${kind}`) : null;
+  });
+
   /** Message clair : hors périmètre, aucune donnée, précision demandée, ou intent inconnu. */
   protected readonly showMessage = computed(() => {
     const answer = this.store.answer();
@@ -233,7 +291,11 @@ export class AnswerPage {
 
   protected readonly errorTitleKey = computed<MessageKey>(() => {
     const kind = this.store.errorKind();
-    return kind === 'unauthorized' ? 'error.unauthorized' : kind === 'notFound' ? 'error.notFound' : 'error.network';
+    return kind === 'unauthorized'
+      ? 'error.unauthorized'
+      : kind === 'notFound'
+        ? 'error.notFound'
+        : 'error.network';
   });
 
   protected readonly errorBodyKey = computed<MessageKey>(() => {

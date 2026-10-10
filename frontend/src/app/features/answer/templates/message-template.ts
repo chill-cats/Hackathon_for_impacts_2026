@@ -21,7 +21,7 @@ type MessageKind = 'clarification' | 'no_data' | 'out_of_scope';
       class="border-line-strong bg-surface flex flex-col gap-3 rounded-lg border border-dashed p-5"
       [attr.data-message]="kind()"
     >
-      <h3 class="type-display-m flex items-center gap-2">
+      <h3 class="type-display-m flex items-center gap-2" data-toc-level="1">
         <ng-icon [name]="kind() === 'clarification' ? 'lucideCircleHelp' : 'lucideInfo'" aria-hidden="true" />
         {{ i18n.t(titleKey()) }}
       </h3>
