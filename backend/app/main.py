@@ -13,6 +13,7 @@ Documentation interactive : http://localhost:3000/docs
 import hmac
 import os
 import unicodedata
+from contextlib import asynccontextmanager
 from datetime import date
 from typing import Literal
 
@@ -30,9 +31,18 @@ from . import opportunities as opp
 from . import models as m
 from . import schemas as s
 from . import services
+from . import warmup
 from .services import DISCLAIMER, NO_MATCH, NotFound
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Au démarrage : préchauffe en arrière-plan les requêtes de démo (voir warmup.py ; WARMUP=0 pour désactiver)."""
+    warmup.start(_app)
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="LPC Global Regulatory AI API",
     version="0.2.1",
     description="Contrat : openapi.proposed.yaml. Pas une source réglementaire officielle : "

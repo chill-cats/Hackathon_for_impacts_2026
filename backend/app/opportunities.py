@@ -1,8 +1,8 @@
 """GET /opportunities : « espaces libres pour le biocontrôle » (HORS CONTRAT, lecture seule).
 
-Idée : pour un couple (pays, culture normalisée, cible normalisée), compter les usages ACTIFS de produits
-chimiques et de produits biologiques. Beaucoup de chimiques et peu (ou pas) de biologiques = un espace où un
-produit de biocontrôle pourrait trouver sa place.
+Idée : pour un couple (pays, culture normalisée, cible normalisée), compter les produits (et les usages) ACTIFS
+chimiques et biologiques. Beaucoup de produits chimiques et peu (ou pas) de biologiques = un espace où un produit de
+biocontrôle pourrait trouver sa place. Le score = produits chimiques distincts / (1 + produits biologiques distincts).
 
 Limites assumées (rappelées dans chaque réponse) :
 - Aucune donnée de retrait d'USAGE n'existe dans les sources : on ne mesure donc PAS un recul, seulement l'état actuel.
@@ -22,7 +22,10 @@ from .services import DISCLAIMER, build_evidence, cached, nz
 ANALYSIS_DISCLAIMER = ("Aide à l'analyse, pas une décision réglementaire ; "
                        "classification biologique/chimique par règle, à vérifier.")
 CATEGORY_METHOD = "rule_based"
-SCORE_FORMULA = "chemicalUses / (1 + biologicalUses)"
+# Le score compte des PRODUITS distincts, pas des usages : en Allemagne un même produit a souvent plusieurs usages pour un
+# même couple culture × cible, ce qui gonflait les scores. Les nombres d'usages restent affichés à titre d'information.
+SCORE_FORMULA = "chemicalProducts / (1 + biologicalProducts)"
+OPP_CACHE_SECONDS = 1800   # le préchauffage (warmup.py) rafraîchit avant l'expiration
 
 # ---------------------------------------------------------------------------
 # Classification biologique / chimique (règle transparente, prudente)
@@ -156,7 +159,7 @@ def name_filters(value, resolver, column, eppo_column, params, key):
     return f"{column} ILIKE :{key}"
 
 
-@cached(120)
+@cached(OPP_CACHE_SECONDS)
 def aggregate(country, crop, target, product_id, min_chemical, limit, lpc_only=False):
     """Couples (pays, culture, cible) classés par score décroissant + compteurs de qualité des données."""
     ctx = lpc_context()
@@ -212,7 +215,8 @@ def aggregate(country, crop, target, product_id, min_chemical, limit, lpc_only=F
                 WHERE {base_where} AND u.crop_name_normalized IS NOT NULL AND u.target_name_normalized IS NOT NULL
                 GROUP BY r.country_code, u.crop_name_normalized, u.target_name_normalized) t
              WHERE chemical_uses >= :min_chem {family_where} {lpc_where}
-             ORDER BY chemical_uses::float / (1 + biological_uses) DESC, chemical_uses DESC, country_code, crop, target
+             ORDER BY chemical_products::float / (1 + biological_products) DESC, chemical_products DESC, chemical_uses DESC,
+                      country_code, crop, target
              LIMIT :limit""", params),
         # Qualité : part des usages actifs qui ont une culture ET une cible normalisées (les autres ne sont pas comptés)
         ("""SELECT r.country_code, count(*) AS total,
@@ -280,7 +284,7 @@ WITHDRAWN_NOTE = ("Produits retirés de même substance, SANS lien culture × ci
                   "(les sources ne donnent aucun usage pour les produits retirés).")
 
 
-@cached(600)
+@cached(OPP_CACHE_SECONDS)
 def withdrawn_index():
     """{pays: {substance: [homologations retirées]}} : lu une seule fois (≈12 000 lignes) puis gardé en mémoire.
 
@@ -309,7 +313,7 @@ def withdrawn_same_substance(row, substances):
     return {"n": len({r["product_id"] for r in hits.values()}), "sample": [hits[k] for k in sorted(hits)[:3]]}
 
 
-@cached(120)
+@cached(OPP_CACHE_SECONDS)
 def opportunities(country=None, crop=None, target=None, limit=20, product_id=None, min_chemical=5, lpc_only=False):
     """GET /opportunities : voir le docstring du module. Renvoie un dict (noms de champs camelCase, hors contrat)."""
     country = country.upper() if country else None
@@ -360,14 +364,14 @@ def opportunities(country=None, crop=None, target=None, limit=20, product_id=Non
             wd = {"countryCode": row["country_code"], "withdrawnProducts": found["n"],
                   "substancesCompared": len(substances.get(i, ())), "note": WITHDRAWN_NOTE,
                   "evidenceIds": [cite(build_evidence(f"registration:{r['registration_id']}", r)) for r in found["sample"]]}
-        bio_uses = row["biological_uses"]
+        bio_uses, bio_products = row["biological_uses"], row["biological_products"]
         items.append({
             "countryCode": row["country_code"], "cropNormalized": row["crop"], "targetNormalized": row["target"],
             "chemicalUses": row["chemical_uses"], "biologicalUses": bio_uses, "unknownCategoryUses": row["unknown_uses"],
             "chemicalProducts": row["chemical_products"], "biologicalProducts": row["biological_products"],
             "unknownCategoryProducts": row["unknown_products"],
-            "chemicalToBiologicalRatio": round(row["chemical_uses"] / bio_uses, 2) if bio_uses else None,
-            "biocontrolSpaceScore": round(row["chemical_uses"] / (1 + bio_uses), 2),
+            "chemicalToBiologicalRatio": round(row["chemical_products"] / bio_products, 2) if bio_products else None,
+            "biocontrolSpaceScore": round(row["chemical_products"] / (1 + bio_products), 2),
             "usesWithUnknownRegistrationStatus": row["unknown_status_uses"],
             "lpcProducts": products, "withdrawnSameSubstance": wd,
             "evidenceIds": ids, "chemicalEvidenceIds": samples["chemical"], "biologicalEvidenceIds": samples["biological"],

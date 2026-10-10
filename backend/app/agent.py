@@ -767,7 +767,8 @@ def run_market_opportunity(plan, c):
         c.add(f"{key}#score", f"Espace biocontrôle — {where}", it["biocontrolSpaceScore"],
               [evidence[i] for i in it["chemicalEvidenceIds"] + it["biologicalEvidenceIds"]],
               field_name="opportunity.biocontrolSpaceScore",
-              value_original=(f"{it['chemicalUses']} usages chimiques actifs ; {it['biologicalUses']} usages biologiques actifs "
+              value_original=(f"{it['chemicalProducts']} produits chimiques actifs ({it['chemicalUses']} usages) ; "
+                              f"{it['biologicalProducts']} produits biologiques actifs ({it['biologicalUses']} usages) "
                               f"(catégorie déduite par règle, à vérifier)"),
               country=cc, validation="to_verify")
         for p in it["lpcProducts"]:
@@ -902,8 +903,8 @@ def template_text(plan, r, c):
             for it in items[:3]:
                 ids = (it["chemicalEvidenceIds"] + it["biologicalEvidenceIds"])[:1]
                 parts.append(f"{it['cropNormalized']} × {it['targetNormalized']} ({it['countryCode']}) : "
-                             f"{plural(it['chemicalUses'], 'usage chimique actif', 'usages chimiques actifs')} contre "
-                             f"{plural(it['biologicalUses'], 'usage biologique', 'usages biologiques')} {cite(ids)}")
+                             f"{plural(it['chemicalProducts'], 'produit chimique actif', 'produits chimiques actifs')} contre "
+                             f"{plural(it['biologicalProducts'], 'produit biologique', 'produits biologiques')} {cite(ids)}")
             sentences.append(f"Espaces possibles pour le biocontrôle{scope} : " + " ; ".join(parts) + ".")
             if plan.product_id:
                 sentences.append(f"Ce sont des couples où la substance de {plan.product_name} est autorisée dans au moins un pays "

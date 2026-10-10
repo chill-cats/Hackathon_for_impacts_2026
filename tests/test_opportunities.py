@@ -70,17 +70,20 @@ def test_opportunities_fr_top5_has_counts_products_and_evidence(client):
     for item in items:
         assert item["countryCode"] == "FR"
         assert item["chemicalUses"] >= data["minChemicalUses"]
-        assert item["biocontrolSpaceScore"] == pytest.approx(item["chemicalUses"] / (1 + item["biologicalUses"]), abs=0.01)
+        # le score compte des PRODUITS distincts (pas des usages) ; les usages restent affichés à titre d'information
+        assert item["biocontrolSpaceScore"] == pytest.approx(item["chemicalProducts"] / (1 + item["biologicalProducts"]), abs=0.01)
+        assert item["chemicalProducts"] <= item["chemicalUses"] and item["biologicalProducts"] <= item["biologicalUses"]
         assert item["productCategoryMethod"] == "rule_based"
         assert REMINDER in item["disclaimer"] and "par règle" in item["disclaimer"]      # rappel sur CHAQUE ligne
         assert item["chemicalEvidenceIds"], "un compte de chimiques sans preuve citable"
         assert set(item["evidenceIds"]) <= evidence_ids                                 # toute preuve citée est fournie
-        if item["biologicalUses"] == 0:
+        if item["biologicalProducts"] == 0:
             assert item["chemicalToBiologicalRatio"] is None                           # pas de division par zéro
     for ev in data["evidence"]:
         assert ev["sourceId"] and ev["collectedAt"] and ev["validationStatus"]         # règle LPC n°1
         assert ev["isSynthetic"] is False
     assert data["categoryMethod"] == "rule_based"
+    assert data["scoreFormula"] == "chemicalProducts / (1 + biologicalProducts)"
     assert any("Aucun usage retiré" in w for w in data["warnings"])                    # la limite des données est dite
 
 
@@ -156,7 +159,7 @@ def test_ask_market_opportunity(client, keyword_mode, question):
         assert all(set(f["evidenceIds"]) <= known for f in data["facts"])               # chaque fait est sourcé
         assert data["opportunities"]
         # les chiffres du texte viennent des faits : on les retrouve dans les compteurs de l'API
-        assert str(data["opportunities"][0]["chemicalUses"]) in data["answer"]
+        assert str(data["opportunities"][0]["chemicalProducts"]) in data["answer"]
 
 
 def test_ask_other_intents_are_unchanged(client, keyword_mode):

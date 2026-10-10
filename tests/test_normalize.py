@@ -136,3 +136,43 @@ def test_ai_mapping_validated_row_becomes_validated(monkeypatch):
            "model_name": "test", "review_status": "validated"}
     monkeypatch.setattr(nz, "_load_ai_index", lambda: {("crop", "foo"): row})
     assert nz.normalize_crop("Foo")["mapping_status"] == "validated"
+
+
+# --- Extension du dictionnaire aux termes canadiens (anglais) ---------------------------------
+def test_ai_mapping_canadian_crop_types_share_the_species_name():
+    spring, winter = nz.normalize_crop("SPRING WHEAT"), nz.normalize_crop("WINTER WHEAT")
+    assert spring["normalized"] == winter["normalized"] == "Wheat"   # même nom que « Blé » (FR) et « Weizen » (DE)
+    assert spring["eppo_code"] == winter["eppo_code"] == "TRZAX"
+    assert nz.normalize_crop("Weizen")["normalized"] == nz.normalize_crop("Blé")["normalized"] == "Wheat"
+
+
+def test_ai_mapping_canadian_weeds_are_grouped_as_weeds():
+    for value in ("REDROOT PIGWEED", "WILD BUCKWHEAT", "KOCHIA"):
+        assert nz.normalize_target(value)["group"] == "Weeds - dicotyledonous"
+    assert nz.normalize_target("BARNYARD GRASS")["group"] == "Weeds - monocotyledonous"
+    assert nz.normalize_target("LAMBS-QUARTERS")["normalized"] == nz.normalize_target("LAMB?S-QUARTERS")["normalized"]
+
+
+def test_ai_mapping_non_agricultural_categories_are_not_forced_to_a_crop():
+    for value in ("ROADSIDES", "RANGELAND", "SUMMERFALLOW", "AIRPORTS"):
+        found = nz.normalize_crop(value)
+        assert found["group"] == "Non-crop areas" and found["eppo_code"] is None
+        assert "not a crop" in (_ai_note(value) or "")
+    assert nz.normalize_target("TANK MIX")["group"] == "Application context"
+
+
+def _ai_note(value):
+    row = nz._load_ai_index().get(("crop", nz.clean(value)))
+    return row["note"] if row else None
+
+
+def test_ai_mapping_file_is_consistent():
+    """Un même nom normalisé porte toujours le même code EPPO (sinon /compare n'alignerait pas les pays) ; rien d'incomplet."""
+    codes = {}
+    for (kind, _), row in nz._load_ai_index().items():
+        assert row["normalized_en"] and row["group_en"], row["value_original"]
+        assert row["method"] == "ai_suggested" and row["model_name"]
+        assert row["review_status"] in ("to_verify", "validated")
+        assert 0 <= float(row["confidence"]) <= 1
+        codes.setdefault((kind, row["normalized_en"]), set()).add(row["eppo_code_candidate"])
+    assert {name for name, values in codes.items() if len(values) > 1} == set()

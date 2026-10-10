@@ -109,7 +109,7 @@ class Opportunity(BaseModel):
     chemicalProducts: int
     biologicalProducts: int
     unknownCategoryProducts: int
-    chemicalToBiologicalRatio: float | None = None   # null quand aucun usage biologique (division par zéro)
+    chemicalToBiologicalRatio: float | None = None   # produits chimiques / produits biologiques ; null quand aucun produit biologique (division par zéro)
     biocontrolSpaceScore: float
     usesWithUnknownRegistrationStatus: int
     lpcProducts: list[OpportunityProduct]

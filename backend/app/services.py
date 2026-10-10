@@ -50,6 +50,9 @@ class NotFound(Exception):
 # ---------------------------------------------------------------------------
 # Petits outils
 # ---------------------------------------------------------------------------
+REFRESH_MAX_AGE = None   # mis à 60 (s) par warmup.py pendant un rafraîchissement : les valeurs plus vieilles sont recalculées
+
+
 def cached(seconds):
     """Garde le résultat d'une fonction quelques secondes (petites tables de référence)."""
     def decorator(fn):
@@ -57,7 +60,8 @@ def cached(seconds):
 
         def wrapper(*args):
             hit = store.get(args)
-            if hit and time.time() - hit[0] < seconds:
+            max_age = seconds if REFRESH_MAX_AGE is None else min(seconds, REFRESH_MAX_AGE)
+            if hit and time.time() - hit[0] < max_age:
                 return hit[1]
             value = fn(*args)
             store[args] = (time.time(), value)

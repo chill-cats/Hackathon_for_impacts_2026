@@ -15,6 +15,8 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 COPY backend/app backend/app
 COPY backend/etl backend/etl
 COPY data data
+# Requêtes de démo préchauffées au démarrage (backend/app/warmup.py) ; sans ce fichier, pas de préchauffage
+COPY docs/demo_cases.md docs/demo_cases.md
 
 # Port d'écoute : BACK_PORT (3000 par défaut). DATABASE_URL et API_KEY viennent de l'environnement (.env).
 ENV BACK_PORT=3000

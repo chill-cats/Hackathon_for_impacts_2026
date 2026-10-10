@@ -219,7 +219,7 @@ See the French sections above: the 4-step connector import (tunnel on port 8080,
 
 ## Added outside the contract: `GET /opportunities` and intent `market_opportunity` (for Damien to report)
 
-"Free spaces for biocontrol": per country × normalized crop × normalized target, how many ACTIVE chemical vs biological uses exist. Read-only, decision support only. Code: `backend/app/opportunities.py`.
+"Free spaces for biocontrol": per country × normalized crop × normalized target, how many distinct ACTIVE chemical vs biological products (and uses) exist. Read-only, decision support only. Code: `backend/app/opportunities.py`.
 
 **Request**: `GET /opportunities?country=FR&crop=&target=&productId=&lpcOnly=false&minChemicalUses=5&limit=20` (`lpcOnly=true` keeps only pairs where an LPC product, a sister candidate or a same-substance product is already authorized; `limit` 1-100, `country` optional ISO code, `crop` / `target` EPPO code or name in any language, `productId` = LPC product, e.g. `P-LPC-M52`). Also available under `/api/opportunities`. Unknown `productId` → 404.
 
@@ -228,10 +228,10 @@ See the French sections above: the 4-step connector import (tunnel on port 8080,
 | Field | Meaning |
 |---|---|
 | `countryCode`, `cropNormalized`, `targetNormalized` | the pair (only uses that have BOTH normalized) |
-| `chemicalUses`, `biologicalUses`, `unknownCategoryUses` | active uses by category (rule-based, see below) |
-| `chemicalProducts`, `biologicalProducts`, `unknownCategoryProducts` | distinct products behind those uses |
-| `chemicalToBiologicalRatio` | `chemicalUses / biologicalUses`, `null` when there is no biological use |
-| `biocontrolSpaceScore` | `chemicalUses / (1 + biologicalUses)`; the list is sorted by it, descending |
+| `chemicalUses`, `biologicalUses`, `unknownCategoryUses` | active uses by category (rule-based, see below); information only, not used in the score |
+| `chemicalProducts`, `biologicalProducts`, `unknownCategoryProducts` | distinct products behind those uses; the score is computed on these (in Germany one product often has several uses on the same pair, which inflated a score computed on uses) |
+| `chemicalToBiologicalRatio` | `chemicalProducts / biologicalProducts`, `null` when there is no biological product |
+| `biocontrolSpaceScore` | `chemicalProducts / (1 + biologicalProducts)`; the list is sorted by it, descending (ties: more chemical products, then more chemical uses) |
 | `usesWithUnknownRegistrationStatus` | uses of registrations whose source gives no status (DE). They are counted as present, not as "active" |
 | `lpcProducts[]` | LPC products, sister candidates and same-active-substance products authorized on the pair: `relation` (`lpc_product` / `sister_candidate` / `same_active_substance`), `reviewStatus` (anything but `lpc_product` is `to_verify` = hypothesis), `productCategory`, `categoryMethod`, `evidenceIds` |
 | `withdrawnSameSubstance` | see below, `null` when the country has no "withdrawn" status in its source |
