@@ -1,6 +1,112 @@
-<main class="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-6 p-6">
-  <h1 class="text-4xl font-bold tracking-tight">{{ title() }}</h1>
-  <p class="text-muted-foreground">Angular 22 + Tailwind 4 + Spartan NG</p>
-  <button hlmBtn (click)="clicks.set(clicks() + 1)">Clics : {{ clicks() }}</button>
+<div class="bg-brand h-[3px] w-full" aria-hidden="true"></div>
+
+<main class="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-12">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div class="flex flex-col gap-2">
+      <p class="type-caption text-ink-muted">Planche de vérification du thème</p>
+      <h1 class="type-display-xl">{{ title() }}</h1>
+    </div>
+    <button hlmBtn variant="secondary" type="button" (click)="toggleTheme()">
+      <ng-icon [name]="dark() ? 'lucideSun' : 'lucideMoon'" />
+      {{ dark() ? 'Thème clair' : 'Thème sombre' }}
+    </button>
+  </header>
+
+  <section class="flex flex-col gap-4">
+    <h2 class="type-display-l">Boutons</h2>
+    <div class="flex flex-wrap items-center gap-2">
+      <button hlmBtn type="button">Comparer 3 pays</button>
+      <button hlmBtn variant="secondary" type="button">Exporter vers Excel</button>
+      <button hlmBtn variant="ghost" type="button">Annuler</button>
+      <button hlmBtn variant="link" type="button">Ouvrir la source</button>
+      <button hlmBtn variant="destructive" type="button">Rejeter</button>
+      <button hlmBtn size="sm" type="button">Valider</button>
+      <button hlmBtn type="button" disabled>Désactivé</button>
+    </div>
+  </section>
+
+  <section class="flex flex-col gap-4">
+    <h2 class="type-display-l">Statuts</h2>
+    <div class="flex flex-wrap items-center gap-2">
+      @for (status of statuses; track status.key) {
+        <span hlmBadge [variant]="status.variant">
+          <ng-icon [name]="status.icon" />
+          {{ status.label }}
+        </span>
+      }
+    </div>
+    <p class="type-code text-ink-muted">validation_status · status_normalized · FR-EPHY</p>
+  </section>
+
+  <section class="grid gap-6 md:grid-cols-2">
+    <div hlmCard>
+      <div hlmCardHeader>
+        <h3 hlmCardTitle>Poser une question</h3>
+      </div>
+      <div hlmCardContent class="flex flex-col gap-2">
+        <label hlmLabel for="question">Question</label>
+        <input hlmInput id="question" placeholder="LALSTOP G46 WG est-il homologué en France ?" />
+        <button hlmBtn type="button" class="self-start">Demander</button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <div hlmAlert variant="warning">
+        <ng-icon name="lucideTriangleAlert" />
+        <h4 hlmAlertTitle>Non trouvé n'est pas une preuve d'absence</h4>
+        <p hlmAlertDescription>Un résultat vide ne permet pas de conclure à une absence d'homologation.</p>
+      </div>
+      <div hlmAlert>
+        <ng-icon name="lucideInfo" />
+        <h4 hlmAlertTitle>Prototype</h4>
+        <p hlmAlertDescription>Preuve de concept, pas un système réglementaire officiel.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="flex flex-col gap-4">
+    <h2 class="type-display-l">Comparaison</h2>
+    <hlm-tabs tab="table">
+      <hlm-tabs-list>
+        <button hlmTabsTrigger="table">Tableau</button>
+        <button hlmTabsTrigger="sources">Sources</button>
+      </hlm-tabs-list>
+      <div hlmTabsContent="table">
+        <div hlmTableContainer>
+          <table hlmTable>
+            <thead hlmTHead>
+              <tr hlmTr>
+                <th hlmTh>Culture</th>
+                <th hlmTh>Cible</th>
+                <th hlmTh>Pays</th>
+                <th hlmTh>Statut</th>
+              </tr>
+            </thead>
+            <tbody hlmTBody>
+              <tr hlmTr>
+                <td hlmTd>Tomate</td>
+                <td hlmTd>Pourriture grise</td>
+                <td hlmTd><span class="type-code">FR · ANSES</span></td>
+                <td hlmTd>
+                  <span hlmBadge variant="auto" size="sm"><ng-icon name="lucideSparkles" />Extraction auto</span>
+                </td>
+              </tr>
+              <tr hlmTr>
+                <td hlmTd>Colza</td>
+                <td hlmTd>Sclérotinia</td>
+                <td hlmTd><span class="type-code">DE · BVL</span></td>
+                <td hlmTd>
+                  <span hlmBadge variant="review" size="sm"><ng-icon name="lucideCircleHelp" />À vérifier</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="type-caption text-ink-muted pt-2">Donnée fictive</p>
+      </div>
+      <div hlmTabsContent="sources">
+        <p class="type-body-sm text-ink-muted pt-3">Les citations de sources s'affichent ici.</p>
+      </div>
+    </hlm-tabs>
+  </section>
 </main>
-<router-outlet />
