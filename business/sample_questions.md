@@ -1,4 +1,5 @@
 # Sample business questions
+
 - Dans quels pays le produit X est-il homologué ?
 - Comparer les usages, doses and restrictions entre deux marchés.
 - Quels produits contenant le même microorganisme sont enregistrés sur la tomate ?

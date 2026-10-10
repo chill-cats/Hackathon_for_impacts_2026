@@ -123,16 +123,15 @@ def _entity_rows():
 
 
 def _species_level_rows():
-    """{"metarhizium anisopliae": ligne, ...} : les deux premiers mots de chaque variante.
+    """{"metarhizium anisopliae": [lignes...], ...} : les deux premiers mots de chaque variante.
 
     Permet de reconnaître un ancien nom d'espèce écrit sans souche.
     """
-    best = {}
+    groups = {}
     for r in _entity_rows():
         key = " ".join(r["_variant"].split()[:2])
-        if key not in best or (r["_conf"] or 0) > (best[key]["_conf"] or 0):
-            best[key] = r
-    return best
+        groups.setdefault(key, []).append(r)
+    return groups
 
 
 def normalize_active_entity(texte):
@@ -154,9 +153,13 @@ def normalize_active_entity(texte):
         row = max(inside, key=lambda r: len(r["_variant"]), default=None)
     species_only = False
     if row is None:
-        for key, r in _species_level_rows().items():
+        for key, group in _species_level_rows().items():
             if _contains_words(t, key):
-                row, species_only = r, True
+                # Si une souche connue est écrite dans le texte, on prend la variante de cette souche ;
+                # sinon la variante la plus fiable de l'espèce.
+                with_strain = [r for r in group if r["strain"] and clean(r["strain"]) in t]
+                row = max(with_strain or group, key=lambda r: r["_conf"] or 0)
+                species_only = not with_strain   # souche reconnue = correspondance précise, sinon niveau espèce
                 break
     if row is None:
         return None
@@ -166,6 +169,7 @@ def normalize_active_entity(texte):
         "species": row["canonical_species"],
         "strain": strain,
         "matched_variant": row["name_variant"],
+        "relationship_type": row["relationship_type"],
         "confidence": 0.6 if species_only else row["_conf"],
         "review_status": "to_verify" if species_only else row["review_status"],
     }

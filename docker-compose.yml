@@ -45,7 +45,8 @@ services:
   backend:
     profiles: ["backend"]
     build:
-      context: ./backend               # attend un backend/Dockerfile (à écrire selon la techno)
+      context: .                       # racine du dépôt : l'API lit aussi data/ (mapping de synonymes et codes EPPO)
+      dockerfile: backend/Dockerfile
     env_file:
       - .env                        # injecte TOUTES les variables du .env racine dans le conteneur
     ports:
