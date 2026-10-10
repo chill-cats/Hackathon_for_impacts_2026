@@ -79,3 +79,7 @@ Windows / PowerShell, Python 3.11+, venv .venv. Équipe débutante : code simple
 - IA : fournisseur Groq configuré dans .env (AI_PROVIDER=groq, AI_BASE_URL, AI_MODEL) → /ask en mode "llm" ; sans clé → mode "keyword".
 - Frontend Angular fusionné dans main (branche frontend de Damien). /compare expose cropGroup/targetGroup (hors contrat, à reporter par Damien).
 - Groq gratuit = limites de débit : llm.py fait des nouvelles tentatives + modèle de secours AI_FALLBACK_MODEL + cache ; si tout échoue → mode keyword (jamais de plantage).
+- /ask : 5/5 réponses en mode llm (Groq) avec retry, AI_FALLBACK_MODEL et cache ; réponses limitées à 3 phrases ; phrases de couverture distinctes (not_found / not_covered / source_unavailable).
+- /compare : alignedBy (eppo | normalized_name | original), rowsComparable. Les usages CA n'ont presque jamais de cible → comparaison FR/CA au niveau culture (granularity=crop, en cours). Meilleures comparaisons culture × cible : FR ↔ DE.
+- docker-compose : MySQL supprimé ; postgres local optionnel sous le profil "localdb".
+- Sous Windows : lancer les scripts avec PYTHONIOENCODING=utf-8 si erreur d'affichage.
