@@ -302,6 +302,45 @@ def test_expiry_watch_for_one_product(monkeypatch, no_ai):
 # ---------------------------------------------------------------------------
 # Garde-fous (étape f) avec un LLM simulé
 # ---------------------------------------------------------------------------
+def test_found_country_forgotten_by_the_llm_is_added_by_the_code(backend, fake_ai):
+    """Le LLM ne parle que de la France : le Canada (trouvé via un produit sœur) est ajouté par le code, avec sa preuve."""
+    def only_france(payload):
+        fr_ids = [i for f in payload["faits"] for i in f["evidenceIds"] if "FR-EPHY" in i]
+        return f"LALSTOP G46 WG est actif en France [{fr_ids[0]}]."
+    fake_ai(only_france)
+    answer = ask("Dans quels pays LALSTOP G46 est-il homologué ?")
+    assert answer["generator"]["mode"] == "llm"
+    assert {c["countryCode"] for c in answer["coverage"] if c["outcome"] == "found"} >= {"CA", "FR"}
+    text = answer["answer"]
+    assert "Également trouvé" in text and "CA :" in text
+    assert "produit sœur ou même substance, à vérifier" in text          # le Canada n'est trouvé que par la substance active
+    known = {e["evidenceId"] for e in answer["evidence"]}
+    ca_ids = [i for i in agent.CITATION.findall(text.split("Également trouvé")[1]) if "CA" in i]
+    assert ca_ids and all(set(x.split(", ")) <= known for x in ca_ids)    # preuve citée = preuve renvoyée
+    assert answer["answerStatus"] in ("answered", "partial")
+    assert len(agent.split_sentences(text)) <= 3                           # la phrase ajoutée respecte la limite de 3 phrases
+
+
+def test_added_country_sentence_never_drops_the_not_covered_sentence(backend, fake_ai):
+    def three_sentences(payload):
+        fr_id = next(i for f in payload["faits"] for i in f["evidenceIds"] if "FR-EPHY" in i)
+        return f"Actif en France [{fr_id}]. Statut extrait automatiquement [{fr_id}]. {payload['phraseSure']}"
+    fake_ai(three_sentences)
+    answer = ask("Dans quels pays LALSTOP G46 est-il homologué ?")
+    assert "Également trouvé" in answer["answer"] and "marché non couvert" in answer["answer"]
+    assert len(agent.split_sentences(answer["answer"])) <= 3
+
+
+def test_no_sentence_added_when_the_llm_already_mentions_every_found_country(backend, fake_ai):
+    def all_countries(payload):
+        ids = {cc: next(i for f in payload["faits"] for i in f["evidenceIds"] if f"{cc}-" in i or f"-{cc}-" in i)
+               for cc in ("FR", "CA")}
+        return f"Actif en France [{ids['FR']}] et au Canada [{ids['CA']}]."
+    fake_ai(all_countries)
+    answer = ask("Dans quels pays LALSTOP G46 est-il homologué ?")
+    assert "FR :" not in answer["answer"] and "CA :" not in answer["answer"]   # rien n'est répété pour FR et CA
+
+
 def test_invented_number_in_llm_answer_is_blocked(backend, fake_ai):
     fake_ai(lambda p: f"LALSTOP G46 est autorisé à 777 kg/ha [{first_evidence_id(p)}].")
     answer = ask("Dans quels pays LALSTOP G46 est-il homologué ?")

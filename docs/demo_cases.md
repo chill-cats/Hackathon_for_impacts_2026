@@ -128,3 +128,52 @@ Requête exacte : `GET /opportunities?productId=P-LPC-M52&limit=5`
 | Grapevine × Thrips | DE | 6 | 0 | 6.0 | aucun | n/a |
 
 Avec `lpcOnly=true`, seuls les couples où un produit LPC, un candidat sœur ou un produit de même substance est déjà autorisé sont gardés (potentiel d'extension d'un produit déjà présent). Avec `productId`, la liste montre les couples où la substance du produit est autorisée dans au moins un pays mais pas dans le pays indiqué. Les produits sœurs et de même substance sont des hypothèses (`to_verify`). Question `/ask` associée : « Où les usages chimiques reculent-ils sur la vigne ? » ou « Quelles opportunités pour LALGUARD M52 ? ».
+
+## e) Canada : usages chimiques retirés (historique Health Canada) × produits LPC autorisés
+
+Seul le Canada publie des usages de produits retirés (937 homologations « withdrawn » avec leur date de fin officielle). `GET /opportunities?country=CA` renvoie donc, par couple culture × cible : `withdrawnChemicalUses`, `withdrawnChemicalProducts`, `lastWithdrawalDate` (plus grande `expiration_date`) et `withdrawnEvidenceIds` (homologations retirées citées). Pour FR et DE ces champs valent `null`.
+
+⚠️ **Résultats NON remplis : impossible avec les données actuelles.** Vérifié en lecture seule sur la base : sur les 37 126 usages CA retirés (et sur les 88 305 usages actifs), **aucune ligne n'a à la fois une culture et une cible** (`crop_name_original` et `target_name_original` ne sont jamais renseignés ensemble : 16 025 lignes ont une culture, 21 101 ont une cible, 0 les deux). L'API de production le dit déjà : « CA : 0 usages actifs sur 88305 ont une culture et une cible normalisées ». Ce n'est donc pas un manque de normalisation (relancer `--normalize-db` ne changera rien) mais la forme des données CA telles que chargées. Relier une culture à une cible reviendrait à inventer un lien : non fait. Aucun chiffre n'est donné ici (règle : pas de donnée inventée). Le code est prêt : dès que des lignes CA porteront culture ET cible, `withdrawnChemicalUses`, `lastWithdrawalDate` et `/ask` les utiliseront sans autre changement. Le SQL ci-dessous s'exécute sans erreur sur la base (résultat vide pour l'instant).
+
+Requête API (classement par score ; `lpcOnly=true` garde les couples où un produit LPC ou sœur est autorisé) : `GET /opportunities?country=CA&lpcOnly=true&limit=5`
+
+Requête SQL exacte, lecture seule, pour classer par **usages chimiques retirés** les 5 premiers couples CA où un produit LPC ou un candidat sœur (lien exact `product_aliases.related_product_id`) est autorisé (même règle chimique/biologique que l'API : substance sans nom de micro-organisme) :
+
+```sql
+WITH retire AS (          -- usages chimiques retirés (Canada)
+    SELECT u.crop_name_normalized AS crop, u.target_name_normalized AS target,
+           count(*) AS retired_chemical_uses, count(DISTINCT p.product_id) AS retired_chemical_products,
+           max(r.expiration_date) AS last_withdrawal_date
+    FROM uses u
+    JOIN registrations r ON r.registration_id = u.registration_id
+    JOIN products p ON p.product_id = r.product_id
+    WHERE r.country_code = 'CA' AND r.status_normalized = 'withdrawn'
+      AND NOT u.is_synthetic AND NOT r.is_synthetic AND NOT p.is_synthetic
+      AND u.crop_name_normalized IS NOT NULL AND u.target_name_normalized IS NOT NULL
+      AND left(p.product_id, 6) <> 'P-LPC-'
+      AND coalesce(btrim(p.active_entity_original), '') <> ''
+      AND p.active_entity_original !~* '(bacillus|trichoderma|clonostachys|gliocladium|coniothyrium|metarhizium|beauveria|pseudomonas|streptomyces|saccharomyces|paecilomyces|purpureocillium|isaria|lecanicillium|verticillium|akanthomyces|ampelomyces|aureobasidium|pythium|candida|metschnikowia|phlebiopsis|chondrostereum|arthrobotrys|virus|bacteriophage)'
+    GROUP BY 1, 2
+), lpc_autorise AS (      -- produits LPC ou sœurs (hypothèses) avec un usage ACTIF sur le couple
+    SELECT DISTINCT u.crop_name_normalized AS crop, u.target_name_normalized AS target,
+           p.product_id, p.commercial_name
+    FROM uses u
+    JOIN registrations r ON r.registration_id = u.registration_id
+    JOIN products p ON p.product_id = r.product_id
+    WHERE r.country_code = 'CA' AND r.status_normalized IN ('active', 'unknown')
+      AND NOT u.is_synthetic AND NOT r.is_synthetic AND NOT p.is_synthetic
+      AND (left(p.product_id, 6) = 'P-LPC-'
+           OR p.product_id IN (SELECT a.related_product_id FROM product_aliases a
+                               WHERE NOT a.is_synthetic AND a.related_product_id IS NOT NULL
+                                 AND a.relationship_type IN ('sister_product_candidate', 'confirmed_sister_product')))
+)
+SELECT w.crop, w.target, w.retired_chemical_uses, w.retired_chemical_products, w.last_withdrawal_date,
+       string_agg(DISTINCT l.commercial_name, ', ') AS lpc_or_sister_products
+FROM retire w
+JOIN lpc_autorise l ON l.crop = w.crop AND l.target = w.target
+GROUP BY w.crop, w.target, w.retired_chemical_uses, w.retired_chemical_products, w.last_withdrawal_date
+ORDER BY w.retired_chemical_uses DESC, w.crop, w.target
+LIMIT 5;
+```
+
+Les produits sœurs restent des hypothèses (`to_verify`). Un résultat vide ne prouve pas l'absence d'opportunité. Question `/ask` associée : « Quels espaces libres pour le biocontrôle au Canada ? » (la réponse cite le nombre d'usages chimiques retirés et la date du dernier retrait, faits uniquement).

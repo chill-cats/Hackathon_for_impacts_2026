@@ -5,7 +5,8 @@ chimiques et biologiques. Beaucoup de produits chimiques et peu (ou pas) de biol
 biocontrôle pourrait trouver sa place. Le score = produits chimiques distincts / (1 + produits biologiques distincts).
 
 Limites assumées (rappelées dans chaque réponse) :
-- Aucune donnée de retrait d'USAGE n'existe dans les sources : on ne mesure donc PAS un recul, seulement l'état actuel.
+- Des usages retirés réels n'existent que pour le Canada (historique PPID : withdrawnChemicalUses, lastWithdrawalDate) ;
+  pour FR et DE on ne mesure PAS un recul, seulement l'état actuel.
 - La catégorie biologique / chimique est une HYPOTHÈSE par règle (nom de micro-organisme dans la substance active),
   pas une donnée officielle. « chemical » veut dire « pas identifié comme micro-organisme » (cuivre, soufre,
   pyréthrines… y sont aussi).
@@ -280,6 +281,43 @@ def fetch_details(rows, ctx, product_family_re):
     ])
 
 
+WITHDRAWN_WHERE = "r.status_normalized = 'withdrawn' AND NOT u.is_synthetic AND NOT r.is_synthetic AND NOT p.is_synthetic"
+COUNTRIES_WITH_WITHDRAWN_USES = ("CA",)   # seul le Canada publie l'historique des produits retirés AVEC leurs usages (PPID)
+
+
+def fetch_withdrawn_uses(rows, ctx):
+    """USAGES RETIRÉS réels (Canada) pour les couples `rows` : {(pays, culture, cible): {...}}.
+
+    On compte les usages des homologations « withdrawn » dont la catégorie est « chemical » (même règle que pour les usages
+    actifs). La date de dernier retrait = plus grande expiration_date (date de fin officielle de Santé Canada)."""
+    if not rows:
+        return {}
+    params = {**couples_params(rows), "lpc_names": ctx["names"], "bio_re": BIO_REGEX}
+    totals, samples = query_many([
+        (f"""SELECT k.cc, k.crop, k.target, count(*) AS uses, count(DISTINCT p.product_id) AS products,
+                    max(r.expiration_date) AS last_date
+             FROM {KEYS}
+             CROSS JOIN LATERAL (SELECT {CATEGORY_SQL} AS cat) c
+             WHERE {WITHDRAWN_WHERE} AND cat = 'chemical'
+             GROUP BY k.cc, k.crop, k.target""", params),
+        # deux homologations retirées citées comme preuve par couple : les plus récemment retirées d'abord
+        (f"""SELECT * FROM (
+                SELECT d.*, row_number() OVER (PARTITION BY cc, crop, target ORDER BY expiration_date DESC NULLS LAST,
+                                               registration_id) AS rn
+                FROM (SELECT DISTINCT k.cc, k.crop, k.target, {REG_COLS}, r.expiration_date
+                      FROM {KEYS}
+                      CROSS JOIN LATERAL (SELECT {CATEGORY_SQL} AS cat) c
+                      WHERE {WITHDRAWN_WHERE} AND cat = 'chemical') d) x
+             WHERE rn <= {MAX_EVIDENCE_SAMPLES}""", params),
+    ])
+    found = {key_of(t["cc"], t["crop"], t["target"]): {"uses": t["uses"], "products": t["products"],
+                                                     "last_date": t["last_date"], "evidence": []} for t in totals}
+    for s in samples:
+        found[key_of(s["cc"], s["crop"], s["target"])]["evidence"].append(
+            build_evidence(f"registration:{s['registration_id']}", s))
+    return found
+
+
 WITHDRAWN_NOTE = ("Produits retirés de même substance, SANS lien culture × cible : ce ne sont pas des usages retirés "
                   "(les sources ne donnent aucun usage pour les produits retirés).")
 
@@ -327,6 +365,9 @@ def opportunities(country=None, crop=None, target=None, limit=20, product_id=Non
     else:
         lpc_rows, sample_rows, chem_rows = [], [], []
 
+    # Usages retirés réels : seulement pour les pays qui les publient (Canada) ; FR et DE gardent le comportement actuel
+    withdrawn_uses = fetch_withdrawn_uses([r for r in ranked if r["country_code"] in COUNTRIES_WITH_WITHDRAWN_USES], ctx)
+
     lpc_by, sample_by, substances = {}, {}, {}
     index = {key_of(r["country_code"], r["crop"], r["target"]): i for i, r in enumerate(ranked)}
     for r in lpc_rows:
@@ -365,6 +406,13 @@ def opportunities(country=None, crop=None, target=None, limit=20, product_id=Non
                   "substancesCompared": len(substances.get(i, ())), "note": WITHDRAWN_NOTE,
                   "evidenceIds": [cite(build_evidence(f"registration:{r['registration_id']}", r)) for r in found["sample"]]}
         bio_uses, bio_products = row["biological_uses"], row["biological_products"]
+        withdrawn_fields = {"withdrawnChemicalUses": None, "withdrawnChemicalProducts": None, "lastWithdrawalDate": None,
+                            "withdrawnEvidenceIds": []}
+        if row["country_code"] in COUNTRIES_WITH_WITHDRAWN_USES:
+            w = withdrawn_uses.get(key, {"uses": 0, "products": 0, "last_date": None, "evidence": []})
+            withdrawn_fields = {"withdrawnChemicalUses": w["uses"], "withdrawnChemicalProducts": w["products"],
+                                "lastWithdrawalDate": w["last_date"].isoformat() if w["last_date"] else None,
+                                "withdrawnEvidenceIds": [cite(ev) for ev in w["evidence"]]}
         items.append({
             "countryCode": row["country_code"], "cropNormalized": row["crop"], "targetNormalized": row["target"],
             "chemicalUses": row["chemical_uses"], "biologicalUses": bio_uses, "unknownCategoryUses": row["unknown_uses"],
@@ -373,12 +421,12 @@ def opportunities(country=None, crop=None, target=None, limit=20, product_id=Non
             "chemicalToBiologicalRatio": round(row["chemical_products"] / bio_products, 2) if bio_products else None,
             "biocontrolSpaceScore": round(row["chemical_products"] / (1 + bio_products), 2),
             "usesWithUnknownRegistrationStatus": row["unknown_status_uses"],
-            "lpcProducts": products, "withdrawnSameSubstance": wd,
+            "lpcProducts": products, "withdrawnSameSubstance": wd, **withdrawn_fields,
             "evidenceIds": ids, "chemicalEvidenceIds": samples["chemical"], "biologicalEvidenceIds": samples["biological"],
             "productCategoryMethod": CATEGORY_METHOD, "disclaimer": ANALYSIS_DISCLAIMER})
 
     warnings = [
-        "Aucun usage retiré n'existe dans les sources : ce classement montre l'état ACTUEL des usages actifs, pas un recul dans le temps.",
+        "Usages retirés disponibles uniquement pour le Canada (historique Health Canada) ; FR et DE : état actuel uniquement.",
         "Catégorie biologique / chimique : règle sur le nom de la substance active (hypothèse, pas une donnée officielle). "
         "« chemical » = non identifié comme micro-organisme.",
         "Un nombre d'usages biologiques égal à 0 ne prouve pas qu'aucun produit biologique n'est homologué (cultures et cibles non normalisées exclues).",

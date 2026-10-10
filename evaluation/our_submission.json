@@ -1,17 +1,17 @@
 {
   "submission_id": "lpc-regulatory-agent",
-  "generated_at": "2026-10-10T05:22:49Z",
+  "generated_at": "2026-10-10T08:25:35Z",
   "answers": [
     {
       "test_id": "T01",
-      "answer": "Le produit pilote est homologué au Canada avec un statut actif [registration:R-CA-28820]. Il est également homologué en France où le statut est actif [registration:R-FR-EPHY-2230771]. US, MX, BR, UY, BE, ES, IT : marché non couvert par le prototype (aucune source officielle intégrée).",
+      "answer": "Au Canada, le produit apparaît avec un statut actif et le numéro d’homologation 28820, mais ce statut provient d’une extraction automatique et n’est pas confirmé [registration:R-CA-28820]. En Allemagne et en France, il est également indiqué comme actif (numéros 00B229‑00 et 2230771), toutefois ces informations sont issues d’extractions automatiques et restent à vérifier [registration:R-DE-BVL-00B229-00] [registration:R-FR-EPHY-2230771]. US, MX, BR, UY, BE, ES, IT : marché non couvert par le prototype (aucune source officielle intégrée).",
       "facts": [
         {
           "fact_id": "R-CA-28820#status",
           "label": "Statut de PRESTOP (CA)",
           "field": "registration.statusNormalized",
           "value": "active",
-          "value_original": "Full Registration",
+          "value_original": "Full Registration | Current",
           "country_code": "CA",
           "validation_status": "automatically_extracted",
           "confidence": null,
@@ -76,7 +76,7 @@
           "label": "Statut de PRESTOP WG (CA)",
           "field": "registration.statusNormalized",
           "value": "active",
-          "value_original": "Full Registration",
+          "value_original": "Full Registration | Current",
           "country_code": "CA",
           "validation_status": "automatically_extracted",
           "confidence": null,
@@ -140,7 +140,7 @@
           "fact_id": "R-DE-BVL-00B229-00#status",
           "label": "Statut de LALSTOP G46 WG (DE)",
           "field": "registration.statusNormalized",
-          "value": "unknown",
+          "value": "active",
           "value_original": null,
           "country_code": "DE",
           "validation_status": "automatically_extracted",
@@ -192,7 +192,7 @@
           "fact_id": "R-DE-BVL-027495-00#status",
           "label": "Statut de PRESTOP (WP) (DE)",
           "field": "registration.statusNormalized",
-          "value": "unknown",
+          "value": "active",
           "value_original": null,
           "country_code": "DE",
           "validation_status": "automatically_extracted",
@@ -453,7 +453,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "automatically_extracted",
           "evidence_id": "registration:R-CA-28820",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -462,7 +462,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "automatically_extracted",
           "evidence_id": "registration:R-CA-32404",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
@@ -537,14 +537,14 @@
     },
     {
       "test_id": "T02",
-      "answer": "Les données canadiennes ne précisent pas la cible : comparaison au niveau de la culture. Les deux produits sont enregistrés comme actifs au Canada (PRESTOP) et en France (LALSTOP G46 WG) [registration:R-CA-28820] [registration:R-FR-EPHY-2230771]. Une différence d’usage a été relevée pour la fraise entre les deux pays [use:U-FR-EPHY-2120177-06d88aa5112161d25386d9087bf01ce8c2ebcf4cb8f42b69cdc7fda7ad8f93c6-1] [use:U-CA-32404-C23]. Ces statuts et usages proviennent d’extractions automatiques et ne sont pas encore validés.",
+      "answer": "Les données canadiennes ne précisent pas la cible : comparaison au niveau de la culture. Au Canada, le produit PRESTOP est indiqué comme actif, mais ce statut provient d’une extraction automatique et n’est pas validé [registration:R-CA-28820]. En France, le produit LALSTOP G46 WG est également indiqué comme actif, statut extrait automatiquement et donc non confirmé [registration:R-FR-EPHY-2230771]. Une différence d’usage pour la fraise est relevée entre les deux pays [use:U-FR-EPHY-2120177-06d88aa5112161d25386d9087bf01ce8c2ebcf4cb8f42b69cdc7fda7ad8f93c6-1, use:U-CA-32404-C23].",
       "facts": [
         {
           "fact_id": "R-CA-28820#status",
           "label": "Statut de PRESTOP (CA)",
           "field": "registration.statusNormalized",
           "value": "active",
-          "value_original": "Full Registration",
+          "value_original": "Full Registration | Current",
           "country_code": "CA",
           "validation_status": "automatically_extracted",
           "confidence": null,
@@ -609,7 +609,7 @@
           "label": "Statut de PRESTOP WG (CA)",
           "field": "registration.statusNormalized",
           "value": "active",
-          "value_original": "Full Registration",
+          "value_original": "Full Registration | Current",
           "country_code": "CA",
           "validation_status": "automatically_extracted",
           "confidence": null,
@@ -1143,7 +1143,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "automatically_extracted",
           "evidence_id": "registration:R-CA-28820",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1152,7 +1152,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "automatically_extracted",
           "evidence_id": "registration:R-CA-32404",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
@@ -1188,7 +1188,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-32404-C23",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
@@ -1197,7 +1197,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-28820-T01",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1215,7 +1215,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-28820-C06",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1224,7 +1224,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-28820-C09",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1233,7 +1233,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-28820-C21",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1242,7 +1242,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-32404-C09",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
@@ -1265,7 +1265,7 @@
     },
     {
       "test_id": "T03",
-      "answer": "Les champs validationStatus des enregistrements R‑CA‑28820, R‑DE‑BVL‑00B229‑00 et R‑FR‑EPHY‑2120177 sont incertains car ils proviennent d’extractions automatiques [registration:R-CA-28820][registration:R-DE-BVL-00B229-00][registration:R-FR-EPHY-2120177]. De même, les enregistrements R‑CA‑32404 et R‑DE‑BVL‑027495‑00 affichent le même statut non validé [registration:R-CA-32404][registration:R-DE-BVL-027495-00].",
+      "answer": "Les statuts de validation des enregistrements R‑CA‑28820, R‑DE‑BVL‑00B229‑00 et R‑FR‑EPHY‑2120177 sont incertains car ils proviennent d’extractions automatiques [registration:R-CA-28820] [registration:R-DE-BVL-00B229-00] [registration:R-FR-EPHY-2120177]. De même, les statuts de validation des enregistrements R‑CA‑32404 et R‑DE‑BVL‑027495‑00 restent non validés et donc incertains [registration:R-CA-32404] [registration:R-DE-BVL-027495-00].",
       "facts": [
         {
           "fact_id": "not_validated:registration:R-CA-28820:validationStatus",
@@ -1467,7 +1467,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "automatically_extracted",
           "evidence_id": "registration:R-CA-28820",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1476,7 +1476,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "automatically_extracted",
           "evidence_id": "registration:R-CA-32404",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
@@ -1539,7 +1539,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-28820-C01",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1548,7 +1548,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-28820-C02",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1557,7 +1557,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-28820-C03",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1566,7 +1566,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-28820-C04",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1575,7 +1575,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-28820-C05",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1584,7 +1584,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-28820-C06",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1593,7 +1593,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "to_verify",
           "evidence_id": "use:U-CA-28820-C07",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1605,7 +1605,7 @@
     },
     {
       "test_id": "T04",
-      "answer": "LALFRESH S et PRESTOP (WP) apparaissent comme des candidats à confirmer, basés sur la même espèce et souche (Clonostachys rosea, J1446) [registration:R-FR-EPHY-2230264] [registration:R-DE-BVL-027495-00]. Le produit PRESTOP et sa version 4B sont également proposés comme produits sœurs, bien que ces hypothèses restent à vérifier [registration:R-CA-28820] [registration:R-FR-EPHY-2120177] [registration:R-FR-EPHY-2150847]. Enfin, PRESTOP WG figure parmi les candidats, mais son statut de produit sœur n’est pas encore confirmé [registration:R-CA-32404].",
+      "answer": "Les produits LALFRESH S, PRESTOP (WP) et PRESTOP 4B sont proposés comme candidats à confirmer comme produits sœurs, mais ces hypothèses restent à vérifier [registration:R-FR-EPHY-2230264] [registration:R-DE-BVL-027495-00] [registration:R-FR-EPHY-2150847]. Le produit PRESTOP, identifié tant en Canada (reg. 28820) qu’en France (reg.",
       "facts": [
         {
           "fact_id": "sister:A-SIS-d19bbde7aa66c1b1",
@@ -1705,7 +1705,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "automatically_extracted",
           "evidence_id": "registration:R-CA-28820",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",
@@ -1723,7 +1723,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "automatically_extracted",
           "evidence_id": "registration:R-CA-32404",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/32404?lang=en",
@@ -1737,7 +1737,7 @@
     },
     {
       "test_id": "T05",
-      "answer": "La source officielle de PRESTOP au Canada est Health Canada PPID, celle de LALSTOP G46 WG en Allemagne est BVL PSM API, et celle en France est ANSES E‑Phy Open Data [registration:R-CA-28820] [registration:R-DE-BVL-00B229-00] [registration:R-FR-EPHY-2230771]. Ces informations proviennent d’extractions automatiques et ne sont pas encore validées [registration:R-CA-28820].",
+      "answer": "La source officielle de PRESTOP au Canada est le PPID de Health Canada, avec une date de collecte indiquée le 2026‑10‑10, mais ces informations sont extraites automatiquement et non validées [registration:R-CA-28820]. En Allemagne, la source officielle de LALSTOP G46 WG est le BVL PSM API, collectée le 2026‑10‑10, et en France la source officielle est l’ANSES E‑Phy Open Data ; ces données sont également extraites automatiquement et non confirmées [registration:R-DE-BVL-00B229-00][registration:R-FR-EPHY-2230771]. US, MX, BR, UY, BE, ES, IT : marché non couvert par le prototype (aucune source officielle intégrée).",
       "facts": [
         {
           "fact_id": "R-CA-28820#source",
@@ -1756,7 +1756,7 @@
           "fact_id": "R-CA-28820#collectedAt",
           "label": "Date de collecte de PRESTOP (CA)",
           "field": "evidence.collectedAt",
-          "value": "2026-10-10T05:05:17.121115+00:00",
+          "value": "2026-10-10T05:50:31.619759+00:00",
           "value_original": null,
           "country_code": "CA",
           "validation_status": "automatically_extracted",
@@ -1822,7 +1822,7 @@
         {
           "source_id": "CA-PPID",
           "source_url": "https://open.canada.ca/data/dataset/e10b0d6e-04ac-4014-a64a-666c3874bbe0",
-          "collected_at": "2026-10-10T05:05:17.121115Z",
+          "collected_at": "2026-10-10T05:50:31.619759Z",
           "validation_status": "automatically_extracted",
           "evidence_id": "registration:R-CA-28820",
           "source_record_url": "https://pest-control.canada.ca/pesticide-registry-api/api/extract/product/28820?lang=en",

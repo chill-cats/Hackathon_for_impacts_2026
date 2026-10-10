@@ -205,15 +205,19 @@ class ReferenceData:
         return idx
 
     def match_entity(self, active_text):
-        """(mapping_row, strain_matches) for the first known microorganism in the text, else (None, False).
+        """(mapping_row, strain_matches) for a known microorganism in the text, else (None, False).
+        Prefers the row whose strain also matches (e.g. F52 -> AE-006 rather than Ma 43 -> AE-005).
         Also matches former names, e.g. 'Gliocladium catenulatum' -> Clonostachys rosea."""
         t = norm(active_text)
+        fallback = None
         for e in sorted(self.entities, key=lambda e: e['mapping_id']):
             species = ' '.join(e['name_variant'].split()[:2]).lower()
             if species in t:
                 strain = norm(e['strain'])
-                return e, bool(strain) and strain in t
-        return None, False
+                if strain and strain in t:
+                    return e, True          # species AND strain match: best possible row
+                fallback = fallback or e    # species only: keep the first as a fallback
+        return fallback, False
 
     def _eppo(self, text, idx):
         t = norm(text)
@@ -241,3 +245,14 @@ class BaseAdapter(ABC):
         """input_path: optional frozen extract. Adapters whose fetch() takes no argument keep working."""
         raw = self.fetch(input_path) if input_path is not None else self.fetch()
         return self.to_canonical(raw)
+    
+def project_root() -> Path:
+    """The repository root: the folder that contains .git (fallback: first parent with data/ and .env)."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / '.git').exists():
+            return parent
+    for parent in here.parents:
+        if (parent / 'data').is_dir() and (parent / '.env').exists():
+            return parent
+    raise RuntimeError(f'Could not find the project root above {here}')

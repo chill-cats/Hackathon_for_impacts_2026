@@ -407,7 +407,9 @@ def resolve(understanding, body, question):
             plan.unknown_product = body.productId
 
     # Ajustements d'intention (ex. « Dans quels pays Clonostachys rosea est-il homologué ? » = recherche par substance)
-    if plan.intent == "registration_lookup" and not plan.product_id and plan.active_entity and not plan.unknown_product:
+    # (idem avec une culture ou une cible : « Quels produits sont homologués pour le blé en France ? »)
+    if (plan.intent == "registration_lookup" and not plan.product_id and not plan.unknown_product
+            and (plan.active_entity or plan.crop or plan.target)):
         plan.intent = "ingredient_search"
     if plan.intent == "ingredient_search" and plan.product_id and not (plan.active_entity or plan.crop or plan.target):
         plan.intent = "registration_lookup"
@@ -595,6 +597,59 @@ def run_registration_lookup(plan, c):
                   extra={"cites": cites})
 
 
+def names_of(registrations):
+    """Noms des produits (3 au plus, sans doublon) d'une liste d'homologations."""
+    return ", ".join(list(dict.fromkeys(x.get("productNameOriginal") or x["productId"] for x in registrations))[:3])
+
+
+def mention_found_countries(text, r, c):
+    """Garde-fou « registration_lookup » : tout pays dont la couverture est « found » doit apparaître dans le texte.
+
+    Le LLM résume et peut oublier un pays (ex. le Canada, trouvé seulement via un produit sœur). Pour chaque pays oublié,
+    le CODE ajoute une phrase factuelle avec ses preuves, et « produit sœur ou même substance, à vérifier » si
+    l'homologation n'a pas été trouvée par le nom exact du produit demandé."""
+    found, _ = coverage_split(r.coverage)
+
+    def missing(some_text):   # sans les citations : « registration:R-CA-1 » n'est pas une mention du Canada
+        mentioned = set(find_countries(CITATION.sub(" ", some_text)))
+        return [cc for cc in found if cc not in mentioned
+                and any(x["countryCode"] == cc for x in r.typed.get("registrations", []))]
+
+    if not missing(text):
+        return text
+    # La phrase ajoutée compte dans la limite de 3 phrases : on raccourcit le texte rédigé, mais jamais les phrases de
+    # couverture (pays non couverts / sans résultat / source indisponible), qui sont obligatoires.
+    sentences = split_sentences(text)
+    coverage_part = [x for x in sentences if "marché non couvert" in x or "source officielle indisponible" in x
+                     or nz.clean(x).startswith(SAFE_PREFIX)]
+    body = [x for x in sentences if x not in coverage_part]
+    if len(body) + 1 + len(coverage_part) > MAX_SENTENCES:
+        body = body[:max(1, MAX_SENTENCES - 1 - len(coverage_part))]
+    parts = [country_sentence(cc, r, c) for cc in missing(" ".join(body))]   # recalculé : le raccourcissement a pu retirer des pays
+    return " ".join(body + ["Également trouvé : " + " ; ".join(parts) + "."] + coverage_part)
+
+
+def country_sentence(cc, r, c):
+    """« CA : 2 homologations (2 active(s)) — PRESTOP, PRESTOP WG (produit sœur ou même substance, à vérifier) [ids] »"""
+    regs = [x for x in r.typed["registrations"] if x["countryCode"] == cc]
+    detail = ", ".join(f"{k} {STATUS_FR.get(s, s)}" for s, k in r.counters["statusByCountry"][cc].items())
+    by_name = [x for x in regs if (x.get("matchedVia") or {}).get("matchedOn") in (None, "commercial_name")]
+    by_other = [x for x in regs if x not in by_name]   # trouvé par la substance active ou un alias : sœur / même substance
+    ids = list(dict.fromkeys(i for f in c.facts if f["countryCode"] == cc for i in f["evidenceIds"]))[:2]
+    if not ids:   # faits tronqués (MAX_FACTS) : on rattache quand même la preuve de l'homologation à la réponse
+        ev = regs[0]["evidence"]
+        c.evidence.setdefault(ev["evidenceId"], ev)
+        c.facts.append({"factId": f"{regs[0]['registrationId']}#status", "label": f"Statut de {names_of(regs[:1])} ({cc})",
+                        "field": "registration.statusNormalized", "value": regs[0]["statusNormalized"],
+                        "valueOriginal": regs[0].get("statusOriginal"), "productId": regs[0]["productId"],
+                        "countryCode": cc, "evidenceIds": [ev["evidenceId"]], "validationStatus": fact_validation(regs[0])})
+        ids = [ev["evidenceId"]]
+    shown = [names_of(by_name)] if by_name else []
+    if by_other:
+        shown.append(f"{names_of(by_other)} (produit sœur ou même substance, à vérifier)")
+    return f"{cc} : {plural(len(regs), 'homologation', 'homologations')} ({detail}) — {' ; '.join(shown)} {cite(ids)}"
+
+
 def run_use_comparison(plan, c):
     countries = plan.countries[:MAX_COUNTRIES]
     data = services.compare_uses(plan.product_id, countries, plan.crop, plan.target, False, 200, 0)
@@ -755,6 +810,15 @@ def run_source_lookup(plan, c):
     return Result(typed={"sources": sources}, coverage=coverage, warnings=warnings, counters=counters, extra={"cites": cites})
 
 
+def withdrawn_clause(it):
+    """Canada : « ; N usages chimiques retirés, dernier retrait le AAAA-MM-JJ [preuve] » (faits uniquement), sinon vide."""
+    if not it.get("withdrawnChemicalUses"):
+        return ""
+    when = f", dernier retrait le {it['lastWithdrawalDate']}" if it.get("lastWithdrawalDate") else ""
+    return (f" ; {plural(it['withdrawnChemicalUses'], 'usage chimique retiré', 'usages chimiques retirés')}{when} "
+            f"{cite(it['withdrawnEvidenceIds'][:1])}")
+
+
 def run_market_opportunity(plan, c):
     """« Où le biocontrôle a-t-il de la place ? » : s'appuie UNIQUEMENT sur les faits de GET /opportunities."""
     country = plan.countries[0] if len(plan.countries) == 1 else None
@@ -771,6 +835,12 @@ def run_market_opportunity(plan, c):
                               f"{it['biologicalProducts']} produits biologiques actifs ({it['biologicalUses']} usages) "
                               f"(catégorie déduite par règle, à vérifier)"),
               country=cc, validation="to_verify")
+        if it.get("withdrawnChemicalUses"):   # Canada seulement : usages retirés réels (historique Health Canada)
+            c.add(f"{key}#withdrawn", f"Usages chimiques retirés — {where}", it["withdrawnChemicalUses"],
+                  [evidence[i] for i in it["withdrawnEvidenceIds"]], field_name="opportunity.withdrawnChemicalUses",
+                  value_original=(f"{it['withdrawnChemicalUses']} usages chimiques retirés ({it['withdrawnChemicalProducts']} produits) ; "
+                                  f"dernier retrait (date de fin officielle) : {it['lastWithdrawalDate'] or 'inconnu'}"),
+                  country=cc, validation="to_verify")
         for p in it["lpcProducts"]:
             label = "Produit LPC autorisé" if p["relation"] == "lpc_product" else "Candidat sœur ou même substance (hypothèse) autorisé"
             c.add(f"{key}#lpc:{p['productId']}", f"{label} — {where}", p["commercialName"],
@@ -904,7 +974,8 @@ def template_text(plan, r, c):
                 ids = (it["chemicalEvidenceIds"] + it["biologicalEvidenceIds"])[:1]
                 parts.append(f"{it['cropNormalized']} × {it['targetNormalized']} ({it['countryCode']}) : "
                              f"{plural(it['chemicalProducts'], 'produit chimique actif', 'produits chimiques actifs')} contre "
-                             f"{plural(it['biologicalProducts'], 'produit biologique', 'produits biologiques')} {cite(ids)}")
+                             f"{plural(it['biologicalProducts'], 'produit biologique', 'produits biologiques')} {cite(ids)}"
+                             + withdrawn_clause(it))
             sentences.append(f"Espaces possibles pour le biocontrôle{scope} : " + " ; ".join(parts) + ".")
             if plan.product_id:
                 sentences.append(f"Ce sont des couples où la substance de {plan.product_name} est autorisée dans au moins un pays "
@@ -937,7 +1008,9 @@ Règles ABSOLUES :
 
 OPPORTUNITY_RULE = """
 - Opportunité de marché : parle d'« espaces possibles pour le biocontrôle », jamais de recommandation ni de décision. La
-  catégorie biologique / chimique est une hypothèse par règle, et une absence d'usage biologique ne prouve rien."""
+  catégorie biologique / chimique est une hypothèse par règle, et une absence d'usage biologique ne prouve rien.
+- Canada : si un fait « Usages chimiques retirés » est fourni, mentionne leur nombre et la date du dernier retrait, tels quels,
+  sans interprétation ni tendance."""
 OPPORTUNITY_REMINDER = ("Aide à l'analyse, pas une décision réglementaire ; "
                         "classification biologique/chimique par règle, à vérifier.")
 
@@ -1166,6 +1239,8 @@ def ask(body):
     text, check_warnings, blocked = verify_text(text, c.facts, context, r.coverage, plan.intent,
                                                 require_citation=written_by_llm)
     warnings += check_warnings
+    if plan.intent == "registration_lookup" and not blocked:
+        text = mention_found_countries(text, r, c)
     if plan.intent == "market_opportunity" and "aide a l'analyse" not in nz.clean(text).replace("’", "'"):
         text = f"{text} {OPPORTUNITY_REMINDER}"   # rappel TOUJOURS présent, même si le texte vient du LLM ou a été bloqué
     note = r.extra.get("level_note")   # bascule automatique au niveau culture : toujours dite, ajoutée après les contrôles

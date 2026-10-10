@@ -63,16 +63,16 @@ Sous Windows : lancer les scripts avec PYTHONIOENCODING=utf-8 si erreur d'affich
 - ⚠️ Ne JAMAIS exécuter db/schema.sql ni db/reset_DANGER.sql sur la base partagée. Aucun DELETE/DROP/TRUNCATE. db/schema.sql est sans DROP (testé par tests/test_schema_sql.py).
 
 ### Chargement et normalisation
-- Adaptateurs (écrivent directement en base) : backend/etl/adapters/france/ (Nhan), germany/ (Hanane, repris par Nhan), canada/ (Dyland).
+- Adaptateurs (écrivent directement en base) : backend/etl/adapters/france/ (Nhan), germany/ (Nhan), canada/ (Dyland).
 - Ordre de rechargement : `python backend/etl/load_db.py --no-test` (sources, produits pilotes LPC, dictionnaires) → adaptateurs → `python backend/etl/load_db.py --normalize-db`.
-- Normalisation : mappings LPC (prioritaires) puis dictionnaire IA data/ai_term_mapping.csv (method ai_suggested, review_status to_verify). Couverture actuelle des lignes : cultures 69 %, cibles 64 % (baisse due aux nouveaux termes anglais CA → extension du dictionnaire prévue). Voir docs/ai_term_mapping.md.
+- Normalisation : mappings LPC (prioritaires) puis dictionnaire IA data/ai_term_mapping.csv (method ai_suggested, review_status to_verify). Couverture finale : cultures 87 %, cibles 83 % des lignes. Voir docs/ai_term_mapping.md.
 
 ### API et agent
 - Contrat : openapi.proposed.yaml (v0.2.1, Damien) + docs/openapi-changes.md. Hors contrat (à reporter par Damien) : matchedVia (/products), generator.mode (/ask), cropGroup/targetGroup, alignedBy, rowsComparable, granularity (/compare), /opportunities.
 - backend/app/ : main.py, services.py, db.py (lecture seule), models.py (GÉNÉRÉ par datamodel-codegen), schemas.py, agent.py, llm.py. Routes à la racine ET sous /api. Port BACK_PORT (3000).
 - /compare : alignement eppo → normalized_name → original ; granularity=use|crop. Meilleurs cas de démo : docs/demo_cases.md (LALGUARD M52 OD multi-pays ; G46 pour les produits sœurs).
 - /ask : pipeline 6 étapes, garde-fous dans le code ; Groq (AI_MODEL=openai/gpt-oss-120b, AI_FALLBACK_MODEL) avec retry + cache ; 3 phrases max ; phrases distinctes not_found / not_covered / source_unavailable ; sans clé → mode keyword. run_gold.py : 70/70, 5/5 en mode llm.
-- /opportunities fait (backend/app/opportunities.py) + intention /ask market_opportunity : "espaces libres pour le biocontrôle" par culture × cible et pays (usages chimiques actifs vs biologiques, score, produits LPC/sœurs autorisés, lpcOnly=true). Classification biologique/chimique par règle (hypothèse ; "chemical" = non identifié comme micro-organisme). withdrawnSameSubstance = produits retirés de même substance, SANS lien culture × cible (FR seulement). Aucun usage retiré n'existe dans les sources. Lent à froid (8–15 s), cache 2 min.
+- /opportunities fait (backend/app/opportunities.py) + intention /ask market_opportunity : "espaces libres pour le biocontrôle" par culture × cible et pays (usages chimiques actifs vs biologiques, score, produits LPC/sœurs autorisés, lpcOnly=true). Classification biologique/chimique par règle (hypothèse ; "chemical" = non identifié comme micro-organisme). withdrawnSameSubstance = produits retirés de même substance, SANS lien culture × cible (FR seulement). Usages retirés : CA seulement (champs withdrawn*), mais vides car aucune ligne CA n'a culture ET cible. Lent à froid (8–15 s), cache 2 min.
 - Tests : `python -m pytest -q` depuis la racine.
 
 ### Déploiement et frontend
@@ -82,7 +82,12 @@ Sous Windows : lancer les scripts avec PYTHONIOENCODING=utf-8 si erreur d'affich
 - Frontend Angular (Damien) fusionné dans main ; doit pointer vers l'API du serveur.
 - Phrase de démo : Tomate × taches brunes (FR) = 51 usages chimiques vs 4 biologiques, PRESTOP (sœur de G46) autorisé → GET /opportunities?country=FR&lpcOnly=true&limit=5
 - Normalisation finale (lancée sur le serveur) : cultures 87 %, cibles 83 % des lignes. On ne normalise plus.
-- CA : +937 produits retirés (historique PPID, avec date de fin), 37 126 usages dont 21 101 avec cible → vrais usages retirés par culture × cible (Canada uniquement).
-- Démo : Tomate × acariens (FR) = 22 produits chimiques vs 2 biologiques, LALGUARD M52 OD autorisé (score = chemicalProducts / (1 + biologicalProducts)). Préchauffage des requêtes de démo au démarrage (backend/app/warmup.py).
-- Normalisation lourde : la lancer SUR LE SERVEUR (docker exec lpc-api python backend/etl/load_db.py --normalize-db).
-- 09:00 : gel des fonctionnalités backend, sauf "usages retirés réels (Canada)" (limite 10:15).
+- CA : +937 produits retirés (historique PPID, avec date de fin), 37 126 usages. ⚠️ Aucune ligne uses CA n'a culture ET cible ensemble (16 025 culture seule / 21 101 cible seule / 0 les deux) → /opportunities?country=CA renvoie items: []. Code withdrawn* prêt (023d1d5). Ne pas inventer de lien, ne pas recharger avant la démo.
+- Démo : Tomate × acariens (FR) = 22 produits chimiques vs 2 biologiques, LALGUARD M52 OD autorisé (score = chemicalProducts / (1 + biologicalProducts)). Préchauffage : backend/app/warmup.py.
+- Normalisation lourde : SUR LE SERVEUR (docker exec lpc-api python backend/etl/load_db.py --normalize-db). On ne normalise plus.
+- 09:31 : fix 500 /ask (2b0a028 : openai dans backend/requirements.txt + client dans try → repli keyword). Redéployé par Nhan à 09:50.
+- 09:45 : evaluation/our_submission.json régénéré (FR+DE+CA) et commité.
+- 09:50 : mot de passe DB changé par Nhan → DATABASE_URL à jour dans chaque .env (serveur + locaux). Jamais dans git.
+- Hébergement : serveur Vultr (Nhan). Pas de migration Azure ; Azure = argument de reprise (image Docker portable).
+- Hanane absente : docs/limitations.md + docs/regulatory_validation.md faits par Claude Code.
+- BACKEND GELÉ : seulement les bugs qui bloquent la démo. Gel total 13:00.

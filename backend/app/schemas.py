@@ -114,6 +114,11 @@ class Opportunity(BaseModel):
     usesWithUnknownRegistrationStatus: int
     lpcProducts: list[OpportunityProduct]
     withdrawnSameSubstance: WithdrawnSameSubstance | None = None
+    # Usages retirés RÉELS (Canada seulement ; null ailleurs). Usages/produits chimiques d'homologations « withdrawn ».
+    withdrawnChemicalUses: int | None = None
+    withdrawnChemicalProducts: int | None = None
+    lastWithdrawalDate: str | None = None   # plus grande date de fin officielle (expiration_date), ISO 8601
+    withdrawnEvidenceIds: list[str] = []
     evidenceIds: list[str]
     chemicalEvidenceIds: list[str]
     biologicalEvidenceIds: list[str]
