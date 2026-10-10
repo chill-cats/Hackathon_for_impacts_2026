@@ -9,3 +9,4 @@ pytest
 httpx
 sqlalchemy
 psycopg[binary]
+datamodel-code-generator
