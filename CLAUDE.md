@@ -61,3 +61,17 @@ Windows / PowerShell, Python 3.11+, venv .venv. Équipe débutante : code simple
 - product_aliases.related_product_id (migration db/migrations/001_…) : lien EXACT vers le produit sœur ; ne JAMAIS joindre produits et sœurs par le nom.
 - Pas de date d'expiration côté FR : utiliser status_normalized = withdrawn.
 - Pas encore de clé IA : tout doit marcher en mode sans clé (mots-clés).
+
+## État actuel (mis à jour 04:15)
+- Contrat API de référence : openapi.proposed.yaml (v0.2.1, Damien), expliqué dans docs/openapi-changes.md. schema/openapi.yaml = contrat d'origine, ne pas modifier. Champs ajoutés hors contrat (à reporter par Damien) : matchedVia sur /products, generator.mode sur /ask.
+- API : backend/app/ (main.py, services.py, db.py lecture seule, models.py GÉNÉRÉ par datamodel-codegen, schemas.py). Lancement : uvicorn backend.app.main:app --port 3000. Routes à la racine ET sous /api.
+- Agent /ask : backend/app/agent.py + llm.py (pipeline 6 étapes, garde-fous dans le code). Sans clé IA → mode "keyword". scripts/run_gold.py donne 70/70 sur les vraies données.
+- Tests : `python -m pytest -q` depuis la racine (pytest.ini limite la collecte à tests/).
+- ETL : backend/etl/normalize.py et load_db.py. Ordre de rechargement : `python backend/etl/load_db.py --no-test` (références : sources, produits pilotes LPC, dictionnaires) → adaptateurs des pays → `python backend/etl/load_db.py --normalize-db`.
+- Adaptateurs : backend/etl/adapters/france/ (Nhan), germany/ (Hanane), canada/ (Dyland) ; chacun a son propre base.py ; ils écrivent directement en base.
+- Base partagée réinitialisée à 03:14 puis rechargée : FR-EPHY (~13 500 homologations), DE-BVL (~2 100), CA-PPID (5, uniquement produits contenant nos ingrédients). AUCUNE donnée de test en base (rechargé avec --no-test).
+- product_aliases.related_product_id existe : lien EXACT vers le produit sœur ; ne JAMAIS joindre produits et sœurs par le nom.
+- Normalisation : mappings LPC trop petits (33/608 cultures, 10/896 cibles reconnues) → dictionnaire IA data/ai_term_mapping.csv en cours (method "ai_suggested", review_status "to_verify").
+- Pas de date d'expiration côté FR : utiliser status_normalized = withdrawn.
+- ⚠️ Ne JAMAIS exécuter db/schema.sql ni db/reset_DANGER.sql sur la base partagée. Aucun DELETE/DROP/TRUNCATE.
+- Frontend : Damien travaille sur une branche séparée, fusion dans main prévue avant 11:00.
