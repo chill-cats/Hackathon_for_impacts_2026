@@ -36,17 +36,17 @@ sources officielles → scripts/ingest_xx.py (coéquipiers) → data/incoming/xx
   eppo_crop_mapping, eppo_pest_mapping, active_entity_mapping, product_name_mapping
   + collection_runs (journal des collectes) + field_evidence (preuve champ par champ, confiance, méthode, modèle)
   + vue v_comparison (tableau produit × pays × usage). Schéma exporté dans db/schema.sql.
-→ backend/app/ (FastAPI) : contrat EXACT de schema/openapi.yaml + /products/{id}/sisters + /export.
+→ backend/app/ (FastAPI) : contrat EXACT de openapi.proposed.yaml (v0.2.1, étend schema/openapi.yaml sans le casser ; inclut /products/{id}/sisters, /export y est remplacé par /compare?format=csv). Détail : docs/cahier-backend.md.
   Routes exposées à la fois à la racine (/products…) et sous /api (/api/products…) car le nginx du frontend transmet /api/ sans retirer le préfixe.
   Port = variable BACK_PORT (défaut 3000). backend/Dockerfile pour docker compose (profil "backend").
 → /ask : agent LLM à outils + garde-fous (citations d'ID vérifiées, chiffres vérifiés, résultat vide = message fixe)
-→ frontend/ (Angular, Damien) : appelle /api/... ; développe d'abord sur un mock Prism de schema/openapi.yaml.
+→ frontend/ (Angular, Damien) : appelle /api/... ; développe d'abord sur un mock Prism de openapi.proposed.yaml (exemples dans mocks/examples.yaml). Détail : docs/cahier-frontend.md.
 → intégration Microsoft 365 (connecteur Power Automate / Copilot Studio, export Excel).
 Ne pas toucher frontend/ (sauf demande explicite). Ne pas modifier les fichiers du starter kit.
 
 ## Contrats à respecter
 - Colonnes : data/field_dictionary.csv, data/products.csv, data/registrations.csv, data/uses.csv
-- API : schema/openapi.yaml (ne pas le modifier)
+- API : openapi.proposed.yaml (v0.2.1, fait foi pour le front et le back). schema/openapi.yaml = contrat d'origine du starter, à ne pas modifier, ne plus coder dessus.
 - Évaluation : evaluation/gold_questions.csv, scripts/evaluate_submission.py
 
 ## Environnement

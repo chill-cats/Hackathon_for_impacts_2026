@@ -11,7 +11,7 @@ Ce document dit **quoi** construire dans `frontend/`. Le **comment** (composants
 | Données de mock | `mocks/examples.yaml` | 19 réponses d'exemple fictives, une par type de question et par route, validées contre le contrat. Servies par Prism, réutilisées pour les tests et le mode démo hors ligne. |
 | Ce que fait le back | `docs/cahier-backend.md` | Pour savoir ce que le back calcule, et donc ce que le front ne recalcule jamais. |
 | Pourquoi chaque champ existe | `docs/openapi-changes.md` | Contexte. |
-| Règles du projet | `CLAUDE.md` | Valables. La consigne « ne pas toucher `frontend/` » s'adresse aux autres ; ici, c'est le travail demandé. |
+| Règles du projet | `CLAUDE.md` | Valables. La consigne « ne pas toucher `frontend/` » s'adresse aux autres ; ici, c'est le travail demandé. Si une ligne cite encore `schema/openapi.yaml` comme contrat, c'est `openapi.proposed.yaml` qui prévaut : `schema/openapi.yaml` est l'ancien contrat du starter, on ne code ni ne mocke dessus. |
 
 ## 1. Ce qu'on attend de l'application
 
