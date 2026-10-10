@@ -83,3 +83,6 @@ Windows / PowerShell, Python 3.11+, venv .venv. Équipe débutante : code simple
 - /compare : alignedBy (eppo | normalized_name | original), rowsComparable. Les usages CA n'ont presque jamais de cible → comparaison FR/CA au niveau culture (granularity=crop, en cours). Meilleures comparaisons culture × cible : FR ↔ DE.
 - docker-compose : MySQL supprimé ; postgres local optionnel sous le profil "localdb".
 - Sous Windows : lancer les scripts avec PYTHONIOENCODING=utf-8 si erreur d'affichage.
+- /compare granularity=crop (alignement par culture si les cibles manquent, ex. CA). Cas de démo réels dans docs/demo_cases.md : meilleur produit multi-pays = LALGUARD M52 OD (5 cultures communes FR/DE et CA/DE) ; produits sœurs = G46 (PRESTOP en CA/FR/DE) ; FR/CA = fraise (FRAAN).
+- Homologations FR retirées : aucun usage en base ; statut DE absent (à corriger par Hanane). "Opportunité marché" basée sur source.etat usage (field_evidence), en cours.
+- db/schema.sql sécurisé (aucun DROP), testé par tests/test_schema_sql.py.
