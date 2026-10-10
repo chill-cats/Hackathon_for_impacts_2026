@@ -9,7 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from .models import CountryCoverage, MatchedVia, Product, Registration, SourceInfo
+from .models import Answer, AnswerGenerator, CountryCoverage, MatchedVia, Product, Registration, SourceInfo
 
 
 class HealthResponse(BaseModel):
@@ -35,3 +35,14 @@ class RegistrationsResponse(BaseModel):
 
 class SourcesResponse(BaseModel):
     items: list[SourceInfo]
+
+
+class AnswerGeneratorOut(AnswerGenerator):
+    """AnswerGenerator du contrat + `mode` (AJOUT optionnel : « llm » si l'IA a servi, « keyword » en mode sans clé).
+    Propose d'ajouter ce champ au contrat."""
+    mode: Literal["llm", "keyword"] | None = None
+
+
+class AnswerOut(Answer):
+    """Answer du contrat, avec le `generator` enrichi du champ `mode`."""
+    generator: AnswerGeneratorOut | None = None

@@ -130,3 +130,22 @@ Ajouter une variable front : la déclarer `FRONT_XXX` dans `.env.example` et `.e
 4. Mise à jour : `git pull && docker compose --profile backend up -d --build`
 
 Le front appelle `/api/...` : nginx (dans le conteneur front) redirige vers le service `backend`.
+
+## Back-end Python : API et agent `/ask`
+
+```powershell
+python -m venv .venv ; .venv\Scripts\Activate.ps1 ; pip install -r requirements.txt   # 1 fois
+copy .env.example .env      # puis renseigner DATABASE_URL (base PostgreSQL de l'équipe)
+uvicorn backend.app.main:app --port 3000                     # docs : http://localhost:3000/docs
+```
+
+`POST /ask` (aussi sous `/api/ask`) répond en langage naturel **uniquement à partir de la base**, avec preuves vérifiées :
+
+```powershell
+curl.exe -X POST http://localhost:3000/api/ask -H "Content-Type: application/json" -d '{\"question\":\"Dans quels pays LALSTOP G46 est-il homologue ?\"}'
+```
+
+- **Sans clé IA** (`AI_API_KEY` vide dans `.env`) : tout marche en mode dégradé (compréhension par mots-clés, phrases par gabarit, `generator.mode = "keyword"`).
+- **Avec IA** : renseigner `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` (tout fournisseur compatible avec le SDK `openai`). Le LLM comprend la question et rédige 1 à 3 phrases ; le code fournit les faits et **vérifie** le texte (preuves citées existantes, chiffres présents dans les faits, jamais « non homologué » sur un résultat vide). Si un contrôle échoue, la réponse devient « Résumé indisponible — voir le tableau sourcé ci-dessous ».
+- Code : `backend/app/agent.py` (pipeline en 6 étapes) et `backend/app/llm.py` (client IA).
+- Tests : `pytest -q` (avec ou sans clé IA). Score du jeu de questions de référence : `python scripts/run_gold.py` (écrit `evaluation/our_submission.json`).

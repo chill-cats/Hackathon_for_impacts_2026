@@ -1,4 +1,4 @@
-"""API FastAPI du projet LPC : implémente openapi.proposed.yaml (P0 + P1 + /expirations + /sources).
+"""API FastAPI du projet LPC : implémente openapi.proposed.yaml (P0 + P1 + /expirations + /sources + /ask).
 
 Lancer depuis la racine du dépôt :
     uvicorn backend.app.main:app --port 3000
@@ -25,6 +25,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import db  # noqa: F401  (charge le fichier .env)
+from . import agent
 from . import models as m
 from . import schemas as s
 from . import services
@@ -218,10 +219,11 @@ def listSources():
     return services.list_sources()
 
 
-@secured.post("/ask", tags=["agent"], response_model=m.Answer, responses={401: PROBLEM, 501: PROBLEM},
-              summary="Ask a regulatory question in natural language (not implemented yet)")
+@secured.post("/ask", tags=["agent"], response_model=s.AnswerOut, responses={401: PROBLEM},
+              summary="Ask a regulatory question in natural language")
 def askRegulatoryQuestion(body: m.AskRequest):
-    raise ApiError(501, "not_implemented", "The /ask agent is not implemented yet. Use the REST routes.")
+    """Agent : l'IA comprend et rédige, le code fournit et vérifie les données (voir agent.py). Marche sans clé IA."""
+    return agent.ask(body)
 
 
 # Chaque route est publiée à la racine (visible dans /docs) et sous /api (hors /docs, même code)

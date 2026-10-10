@@ -643,6 +643,37 @@ def registration_dict(row, uses):
     }
 
 
+def registrations_of_products(product_ids, countries, crop, target, include_synthetic, limit=200):
+    """Homologations de produits PRÉCIS (sans élargir par alias ni substance), usages filtrés par crop/target.
+
+    Sert à /ask (recherche par substance) : GET /products renvoie les produits, ceci renvoie leurs homologations.
+    Avec un filtre crop/target, seules les homologations qui ont un usage correspondant sont gardées.
+    Renvoie (liste de Registration, avertissements).
+    """
+    if not product_ids:
+        return [], []
+    params = {"ids": list(product_ids), "cap": limit}
+    extra = ""
+    if countries:
+        extra += " AND r.country_code = ANY(CAST(:ccs AS text[]))"
+        params["ccs"] = list(countries)
+    if not include_synthetic:
+        extra += " AND NOT r.is_synthetic AND NOT p.is_synthetic"
+    rows = query(f"""SELECT r.registration_id, r.product_id, r.country_code, r.authority_name, r.registration_number,
+                            r.status_original, r.status_normalized, r.approval_date, r.expiration_date, r.source_id,
+                            r.source_record_url, r.collected_at, r.validation_status, r.is_synthetic,
+                            p.commercial_name, p.active_entity_original, p.active_entity_normalized
+                     FROM registrations r JOIN products p ON p.product_id = r.product_id
+                     WHERE r.product_id = ANY(CAST(:ids AS text[])) {extra}
+                     ORDER BY r.country_code, p.commercial_name, r.registration_id LIMIT :cap""", params)
+    for row in rows:   # trouvées par leur propre produit : pas d'hypothèse de rapprochement
+        row["matched_via"], row["match_warning"] = {"matchedName": row["commercial_name"], "matchedOn": "commercial_name"}, None
+    uses, warnings = fetch_uses({r["registration_id"]: r for r in rows}, include_synthetic, crop, target, per_registration=5)
+    if (crop and crop.strip()) or (target and target.strip()):
+        rows = [r for r in rows if uses.get(r["registration_id"])]
+    return [registration_dict(r, uses.get(r["registration_id"], [])) for r in rows], warnings
+
+
 def search_terms_of(profile):
     return profile["terms"]
 

@@ -102,8 +102,13 @@ def test_sources_and_expirations_and_issues(client):
     assert issues["items"] and issues["countsByType"]
 
 
-def test_ask_not_implemented_yet(client):
-    assert client.post("/api/ask", json={"question": "Où est homologué LALGUARD M52 OD ?"}).status_code == 501
+def test_ask_is_implemented(client):
+    """/ask répond au schéma Answer (le détail de l'agent est testé dans test_agent.py)."""
+    response = client.post("/api/ask", json={"question": "Quelle est la météo à Paris ?"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["answerStatus"] == "out_of_scope" and body["disclaimer"] == DISCLAIMER
+    assert client.post("/api/ask", json={"question": "a"}).status_code == 422
 
 
 def test_api_key_required_only_when_configured(client, monkeypatch):
