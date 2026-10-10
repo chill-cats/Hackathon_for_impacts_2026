@@ -755,6 +755,15 @@ def run_source_lookup(plan, c):
     return Result(typed={"sources": sources}, coverage=coverage, warnings=warnings, counters=counters, extra={"cites": cites})
 
 
+def withdrawn_clause(it):
+    """Canada : « ; N usages chimiques retirés, dernier retrait le AAAA-MM-JJ [preuve] » (faits uniquement), sinon vide."""
+    if not it.get("withdrawnChemicalUses"):
+        return ""
+    when = f", dernier retrait le {it['lastWithdrawalDate']}" if it.get("lastWithdrawalDate") else ""
+    return (f" ; {plural(it['withdrawnChemicalUses'], 'usage chimique retiré', 'usages chimiques retirés')}{when} "
+            f"{cite(it['withdrawnEvidenceIds'][:1])}")
+
+
 def run_market_opportunity(plan, c):
     """« Où le biocontrôle a-t-il de la place ? » : s'appuie UNIQUEMENT sur les faits de GET /opportunities."""
     country = plan.countries[0] if len(plan.countries) == 1 else None
@@ -771,6 +780,12 @@ def run_market_opportunity(plan, c):
                               f"{it['biologicalProducts']} produits biologiques actifs ({it['biologicalUses']} usages) "
                               f"(catégorie déduite par règle, à vérifier)"),
               country=cc, validation="to_verify")
+        if it.get("withdrawnChemicalUses"):   # Canada seulement : usages retirés réels (historique Health Canada)
+            c.add(f"{key}#withdrawn", f"Usages chimiques retirés — {where}", it["withdrawnChemicalUses"],
+                  [evidence[i] for i in it["withdrawnEvidenceIds"]], field_name="opportunity.withdrawnChemicalUses",
+                  value_original=(f"{it['withdrawnChemicalUses']} usages chimiques retirés ({it['withdrawnChemicalProducts']} produits) ; "
+                                  f"dernier retrait (date de fin officielle) : {it['lastWithdrawalDate'] or 'inconnu'}"),
+                  country=cc, validation="to_verify")
         for p in it["lpcProducts"]:
             label = "Produit LPC autorisé" if p["relation"] == "lpc_product" else "Candidat sœur ou même substance (hypothèse) autorisé"
             c.add(f"{key}#lpc:{p['productId']}", f"{label} — {where}", p["commercialName"],
@@ -904,7 +919,8 @@ def template_text(plan, r, c):
                 ids = (it["chemicalEvidenceIds"] + it["biologicalEvidenceIds"])[:1]
                 parts.append(f"{it['cropNormalized']} × {it['targetNormalized']} ({it['countryCode']}) : "
                              f"{plural(it['chemicalProducts'], 'produit chimique actif', 'produits chimiques actifs')} contre "
-                             f"{plural(it['biologicalProducts'], 'produit biologique', 'produits biologiques')} {cite(ids)}")
+                             f"{plural(it['biologicalProducts'], 'produit biologique', 'produits biologiques')} {cite(ids)}"
+                             + withdrawn_clause(it))
             sentences.append(f"Espaces possibles pour le biocontrôle{scope} : " + " ; ".join(parts) + ".")
             if plan.product_id:
                 sentences.append(f"Ce sont des couples où la substance de {plan.product_name} est autorisée dans au moins un pays "
@@ -937,7 +953,9 @@ Règles ABSOLUES :
 
 OPPORTUNITY_RULE = """
 - Opportunité de marché : parle d'« espaces possibles pour le biocontrôle », jamais de recommandation ni de décision. La
-  catégorie biologique / chimique est une hypothèse par règle, et une absence d'usage biologique ne prouve rien."""
+  catégorie biologique / chimique est une hypothèse par règle, et une absence d'usage biologique ne prouve rien.
+- Canada : si un fait « Usages chimiques retirés » est fourni, mentionne leur nombre et la date du dernier retrait, tels quels,
+  sans interprétation ni tendance."""
 OPPORTUNITY_REMINDER = ("Aide à l'analyse, pas une décision réglementaire ; "
                         "classification biologique/chimique par règle, à vérifier.")
 

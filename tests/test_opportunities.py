@@ -84,7 +84,10 @@ def test_opportunities_fr_top5_has_counts_products_and_evidence(client):
         assert ev["isSynthetic"] is False
     assert data["categoryMethod"] == "rule_based"
     assert data["scoreFormula"] == "chemicalProducts / (1 + biologicalProducts)"
-    assert any("Aucun usage retiré" in w for w in data["warnings"])                    # la limite des données est dite
+    assert any("Usages retirés disponibles uniquement pour le Canada" in w for w in data["warnings"])   # la limite est dite
+    for item in items:                                                                  # FR : pas d'usages retirés (état actuel)
+        assert item["withdrawnChemicalUses"] is None and item["lastWithdrawalDate"] is None
+        assert item["withdrawnEvidenceIds"] == []
 
 
 def test_withdrawn_indicator_is_never_presented_as_withdrawn_uses(client):
@@ -94,6 +97,58 @@ def test_withdrawn_indicator_is_never_presented_as_withdrawn_uses(client):
         assert wd is not None and wd["countryCode"] == "FR"
         assert "SANS lien culture × cible" in wd["note"] and "pas des usages retirés" in wd["note"]
         assert "withdrawnUses" not in item and "withdrawnUses" not in wd
+
+
+def test_fetch_withdrawn_uses_groups_totals_and_evidence_without_database(monkeypatch):
+    """Assemblage des résultats SQL (base simulée) : totaux par couple + 2 preuves registration:* avec leur source."""
+    import datetime
+    couple = ("CA", "Tomato", "Late blight")
+    totals = [{"cc": "CA", "crop": "Tomato", "target": "Late blight", "uses": 7, "products": 3,
+               "last_date": datetime.date(2023, 12, 31)}]
+    reg = {"cc": "CA", "crop": "Tomato", "target": "Late blight", "registration_id": "REG-1", "source_id": "CA-PPID",
+           "source_record_url": "https://example.test/1", "collected_at": "2026-10-10T07:00:00Z", "validation_status": "to_verify",
+           "is_synthetic": False, "country_code": "CA"}
+    monkeypatch.setattr(opp, "query_many", lambda queries: [totals, [reg]])
+    found = opp.fetch_withdrawn_uses([{"country_code": "CA", "crop": "Tomato", "target": "Late blight"}], {"names": []})
+    assert found[couple]["uses"] == 7 and found[couple]["products"] == 3 and found[couple]["last_date"].isoformat() == "2023-12-31"
+    assert [e["evidenceId"] for e in found[couple]["evidence"]] == ["registration:REG-1"]
+    assert found[couple]["evidence"][0]["sourceId"] == "CA-PPID"
+    assert opp.fetch_withdrawn_uses([], {"names": []}) == {}
+
+
+def test_withdrawn_clause_states_facts_only():
+    from backend.app import agent
+    item = {"withdrawnChemicalUses": 7, "withdrawnChemicalProducts": 3, "lastWithdrawalDate": "2023-12-31",
+            "withdrawnEvidenceIds": ["registration:REG-1"]}
+    assert agent.withdrawn_clause(item) == " ; 7 usages chimiques retirés, dernier retrait le 2023-12-31 [registration:REG-1]"
+    assert agent.withdrawn_clause({**item, "withdrawnChemicalUses": 1, "lastWithdrawalDate": None})         == " ; 1 usage chimique retiré [registration:REG-1]"
+    assert agent.withdrawn_clause({**item, "withdrawnChemicalUses": 0}) == ""        # rien à dire : pas de phrase inventée
+    assert agent.withdrawn_clause({"withdrawnChemicalUses": None}) == ""             # FR / DE
+
+
+def test_opportunities_ca_has_real_withdrawn_uses_with_evidence(client):
+    data = client.get("/api/opportunities", params={"country": "CA", "limit": 10}).json()
+    evidence = {e["evidenceId"]: e for e in data["evidence"]}
+    if not data["items"]:
+        pytest.skip("aucun usage CA avec culture ET cible sur la même ligne en base (les lignes CA ont soit une culture, soit une cible)")
+    with_withdrawn = [i for i in data["items"] if i["withdrawnChemicalUses"]]
+    assert with_withdrawn, "le Canada contient des usages chimiques retirés : au moins un des 10 premiers couples en a"
+    for item in data["items"]:
+        assert item["withdrawnChemicalUses"] is not None and item["withdrawnChemicalProducts"] is not None
+        assert item["withdrawnChemicalProducts"] <= item["withdrawnChemicalUses"]
+        if item["withdrawnChemicalUses"]:
+            assert item["lastWithdrawalDate"] and len(item["lastWithdrawalDate"]) == 10        # AAAA-MM-JJ
+            assert 1 <= len(item["withdrawnEvidenceIds"]) <= 2
+            for evidence_id in item["withdrawnEvidenceIds"]:
+                assert evidence_id.startswith("registration:") and evidence_id in evidence
+                assert evidence[evidence_id]["sourceId"] == "CA-PPID" and evidence[evidence_id]["collectedAt"]
+        else:
+            assert item["lastWithdrawalDate"] is None and item["withdrawnEvidenceIds"] == []
+
+
+def test_opportunities_de_has_no_withdrawn_uses(client):
+    items = client.get("/api/opportunities", params={"country": "DE", "limit": 2}).json()["items"]
+    assert items and all(i["withdrawnChemicalUses"] is None and i["lastWithdrawalDate"] is None for i in items)
 
 
 def test_opportunities_country_without_withdrawn_status_has_no_indicator(client):
@@ -160,6 +215,18 @@ def test_ask_market_opportunity(client, keyword_mode, question):
         assert data["opportunities"]
         # les chiffres du texte viennent des faits : on les retrouve dans les compteurs de l'API
         assert str(data["opportunities"][0]["chemicalProducts"]) in data["answer"]
+
+
+def test_ask_market_opportunity_ca_mentions_withdrawn_uses_and_last_date(client, keyword_mode):
+    data = client.post("/api/ask", json={"question": "Quels espaces libres pour le biocontrôle au Canada ?"}).json()
+    assert data["intent"] == "market_opportunity"
+    if not data["opportunities"]:
+        pytest.skip("aucun usage CA avec culture ET cible sur la même ligne en base (les lignes CA ont soit une culture, soit une cible)")
+    first = data["opportunities"][0]
+    if first["withdrawnChemicalUses"]:
+        assert "retiré" in data["answer"] and first["lastWithdrawalDate"] in data["answer"]
+        assert str(first["withdrawnChemicalUses"]) in data["answer"]
+        assert any(f["field"] == "opportunity.withdrawnChemicalUses" for f in data["facts"])
 
 
 def test_ask_other_intents_are_unchanged(client, keyword_mode):
