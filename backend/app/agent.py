@@ -407,7 +407,9 @@ def resolve(understanding, body, question):
             plan.unknown_product = body.productId
 
     # Ajustements d'intention (ex. « Dans quels pays Clonostachys rosea est-il homologué ? » = recherche par substance)
-    if plan.intent == "registration_lookup" and not plan.product_id and plan.active_entity and not plan.unknown_product:
+    # (idem avec une culture ou une cible : « Quels produits sont homologués pour le blé en France ? »)
+    if (plan.intent == "registration_lookup" and not plan.product_id and not plan.unknown_product
+            and (plan.active_entity or plan.crop or plan.target)):
         plan.intent = "ingredient_search"
     if plan.intent == "ingredient_search" and plan.product_id and not (plan.active_entity or plan.crop or plan.target):
         plan.intent = "registration_lookup"
