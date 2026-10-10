@@ -45,7 +45,7 @@ MAX_OPPORTUNITIES = 5           # couples culture × cible détaillés dans /ask
 MAX_COUNTRIES = 6               # pays interrogés en parallèle au maximum
 PILOT_PRODUCTS = ["LALSTOP CONTANS WG", "LALSTOP G46 WG", "LALGUARD M52 OD"]
 UNSAFE_OUTCOMES = {"not_found", "not_covered", "source_unavailable"}
-
+OUR_PORTFOLIO = re.compile(r"\b(?:nos|notre|our)\s+(?:produits?|portefeuille|portfolio|products?)\b")
 
 # ===========================================================================
 # Petits outils
@@ -321,6 +321,7 @@ class Plan:
     question: str
     product_id: str | None = None
     product_name: str | None = None
+    product_ids: list = field(default_factory=list)   # tous les produits cités (expiry_watch les traite tous)
     countries: list = field(default_factory=list)
     active_entity: str | None = None
     crop: str | None = None           # code EPPO si résolu, sinon le texte
@@ -333,6 +334,7 @@ class Plan:
     clarification: list | None = None              # options à proposer (answerStatus needs_clarification)
     clarification_text: str | None = None
     unknown_product: str | None = None             # nom cité mais introuvable dans le catalogue
+    
 
 
 def resolve_product(name):
@@ -384,8 +386,12 @@ def resolve(understanding, body, question):
         plan.reference_date = date.fromisoformat(u["referenceDate"])
 
     # Produit : les noms écrits dans la question priment sur le productId de contexte de l'interface
+    names = u["productNames"][:3]
+    if not names and OUR_PORTFOLIO.search(norm(question)):   # « nos produits » = les produits pilotes LPC
+        names = PILOT_PRODUCTS
+        plan.notes.append("« nos produits » interprété comme les produits pilotes LPC : " + ", ".join(PILOT_PRODUCTS) + ".")
     resolved = []
-    for name in u["productNames"][:3]:
+    for name in names:
         res = resolve_product(name)
         if res["status"] == "ok":
             resolved.append(res)
@@ -397,9 +403,10 @@ def resolve(understanding, body, question):
             plan.unknown_product = plan.unknown_product or name
     if resolved:
         plan.product_id, plan.product_name = resolved[0]["productId"], resolved[0]["name"]
-        if len({r["productId"] for r in resolved}) > 1:
+        plan.product_ids = list(dict.fromkeys(r["productId"] for r in resolved))
+        if len(plan.product_ids) > 1 and plan.intent != "expiry_watch":
             plan.notes.append(f"Plusieurs produits cités : seul « {plan.product_name} » est traité dans cette réponse.")
-        plan.unknown_product = None
+        plan.unknown_product = None 
     elif body.productId and not plan.unknown_product:
         try:
             plan.product_id, plan.product_name = body.productId, services.get_product(body.productId)["commercial_name"]
@@ -722,7 +729,11 @@ def run_expiry_watch(plan, c):
     plan.reference_date = ref_date   # montrée dans `parameters` (« ce que l'agent a compris »)
     country = plan.countries[0] if len(plan.countries) == 1 else None
     if plan.product_id:   # le produit demandé seulement : ses homologations dont l'échéance tombe dans la fenêtre
-        data = services.product_registrations(plan.product_id, country, False, 500, 0, 1)
+        regs = {}
+        for pid in plan.product_ids or [plan.product_id]:
+            for reg in services.product_registrations(pid, country, False, 500, 0, 1)["items"]:
+                regs.setdefault(reg["registrationId"], reg)   # sans doublon
+        data = {"items": list(regs.values())}
         limit_date = services.add_months(ref_date, plan.months)
         items = [{"registrationId": r["registrationId"], "productId": r["productId"], "commercialName": r.get("productNameOriginal"),
                   "countryCode": r["countryCode"], "registrationNumber": r["registrationNumber"],
@@ -1165,7 +1176,7 @@ def suggested_questions(plan):
 
 
 def parameters_of(plan):
-    return {"productIds": [plan.product_id] if plan.product_id else [], "countries": plan.countries,
+    return {"productIds":plan.product_ids or ([plan.product_id] if plan.product_id else []), "countries": plan.countries,
             "activeEntity": plan.active_entity, "crop": plan.crop, "target": plan.target,
             "referenceDate": plan.reference_date}
 
