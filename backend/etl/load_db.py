@@ -4,6 +4,7 @@ Usage (depuis la racine du dépôt) :
     python backend/etl/load_db.py               # tout charger (données de test comprises)
     python backend/etl/load_db.py --no-test     # sans data/incoming/test_*.csv
     python backend/etl/load_db.py --reset-data  # VIDE les données (jamais le schéma), après confirmation
+    python backend/etl/load_db.py --normalize-db [--country FR]  # normalise les lignes DEJA en base (UPDATE ciblés)
 
 Principes :
 - La connexion vient UNIQUEMENT de DATABASE_URL dans .env (aucun identifiant dans le code).
@@ -290,10 +291,15 @@ def write_evidence(conn, evidence, accepted_ids):
 ALIAS_SQL = text("""
     INSERT INTO product_aliases
         (alias_id, product_id, alias_name, country_code, relationship_type, confidence, evidence, review_status, is_synthetic)
-    VALUES (:alias_id, :product_id, :alias_name, :country_code, 'sister_product_candidate',
-            :confidence, :evidence, :review_status, :is_synthetic)
+    SELECT CAST(:alias_id AS text), CAST(:product_id AS text), CAST(:alias_name AS text), CAST(:country_code AS text),
+           'sister_product_candidate', CAST(:confidence AS numeric), CAST(:evidence AS text),
+           CAST(:review_status AS text), CAST(:is_synthetic AS boolean)
+    WHERE NOT EXISTS (   -- un alias de meme nom existe deja pour ce produit (ex. cree par un coequipier) : on n'en ajoute pas
+        SELECT 1 FROM product_aliases
+        WHERE product_id = :product_id AND lower(alias_name) = lower(:alias_name) AND alias_id <> :alias_id)
     ON CONFLICT (alias_id) DO UPDATE SET confidence = EXCLUDED.confidence, evidence = EXCLUDED.evidence
-    WHERE product_aliases.review_status = 'to_verify'   -- une relecture humaine n'est jamais écrasée
+    WHERE product_aliases.review_status = 'to_verify'   -- une relecture humaine n'est jamais ecrasee
+      AND (product_aliases.confidence, product_aliases.evidence) IS DISTINCT FROM (EXCLUDED.confidence, EXCLUDED.evidence)
 """)
 
 
@@ -302,27 +308,42 @@ def alias_id(product_id, name):
     return f"A-SIS-{digest}"
 
 
-def write_sisters(conn, products):
-    """Calcule les candidats soeurs et les range dans product_aliases. Renvoie le nombre de lignes."""
+def write_sisters(conn, products, only_with_ids=None):
+    """Calcule les candidats soeurs et les range dans product_aliases.
+
+    only_with_ids : si fourni, ne garde que les paires dont un des deux produits est dans cet ensemble
+    (ex. les produits pilotes LPC). Renvoie (lignes proposees, lignes reellement inserees ou modifiees).
+    """
     synthetic = {p["product_id"]: p["is_synthetic"] for p in products}
     names = {p["product_id"]: p["commercial_name"] for p in products}
-    rows = []
+    best = {}
     for c in nz.find_sister_candidates(products):
+        if only_with_ids is not None and c["product_a_id"] not in only_with_ids and c["product_b_id"] not in only_with_ids:
+            continue
         # Le lien est symétrique quand les deux produits sont connus : une ligne dans chaque sens
         directions = [(c["product_a_id"], c["product_b"])]
         if c["product_b_id"]:
             directions.append((c["product_b_id"], names[c["product_a_id"]]))
         for product_id, other_name in directions:
-            rows.append({
+            if nz.clean(other_name) == nz.clean(names[product_id]):
+                continue  # meme nom que le produit lui-meme (autre homologation du meme produit) : pas un alias
+            row = {
                 "alias_id": alias_id(product_id, other_name), "product_id": product_id, "alias_name": other_name,
                 "country_code": c["country_code"], "confidence": c["confidence"],
                 "evidence": f"[{c['reason']}] {c['evidence']}", "review_status": c["review_status"],
                 "is_synthetic": bool(synthetic.get(c["product_a_id"]) or synthetic.get(c["product_b_id"])),
-            })
-    if rows:
+            }
+            # Meme (produit, nom) obtenu par plusieurs candidats : on garde la meilleure confiance,
+            # sinon la ligne serait reecrite a chaque lancement.
+            old = best.get(row["alias_id"])
+            if old is None or (row["confidence"] or 0) > (old["confidence"] or 0):
+                best[row["alias_id"]] = row
+    rows = list(best.values())
+    changed = 0
+    for row in rows:  # une par une : on veut le nombre exact de lignes inserees / modifiees
         with conn.begin_nested():
-            conn.execute(ALIAS_SQL, rows)
-    return len(rows)
+            changed += max(conn.execute(ALIAS_SQL, row).rowcount, 0)
+    return len(rows), changed
 
 
 # ---------------------------------------------------------------------------
@@ -379,19 +400,212 @@ def reset_data(conn, url):
 
 
 # ---------------------------------------------------------------------------
+# Mode --normalize-db : normalise les lignes DEJA presentes en base
+# ---------------------------------------------------------------------------
+# Regles : UPDATE cibles seulement, jamais de DELETE, jamais de colonne *_original,
+# et on ne remplit qu'une colonne normalisee encore NULL (jamais d'ecrasement).
+BATCH = 1000   # nombre de valeurs distinctes traitees avant chaque commit
+
+# Restriction optionnelle a un pays (--country FR) : :cc vaut NULL si aucun pays n'est demande
+USES_SCOPE = """AND (CAST(:cc AS text) IS NULL OR registration_id IN
+                   (SELECT registration_id FROM registrations WHERE country_code = CAST(:cc AS text)))"""
+PRODUCTS_SCOPE = """AND (CAST(:cc AS text) IS NULL OR product_id IN
+                   (SELECT product_id FROM registrations WHERE country_code = CAST(:cc AS text)))"""
+
+# Une ligne de preuve par valeur remplie, sans doublon (field_evidence n'a pas de cle d'unicite)
+EVIDENCE_FOR_IDS_SQL = text("""
+    INSERT INTO field_evidence
+        (entity_type, entity_id, field_name, value_original, excerpt, extraction_method,
+         confidence, validation_status, collected_at)
+    SELECT CAST(:et AS text), t.id, CAST(:fn AS text), CAST(:vo AS text), CAST(:ex AS text),
+           'lpc_mapping', CAST(:conf AS numeric), 'to_verify', now()
+    FROM unnest(CAST(:ids AS text[])) AS t(id)
+    WHERE NOT EXISTS (
+        SELECT 1 FROM field_evidence e
+        WHERE e.entity_type = :et AND e.entity_id = t.id AND e.field_name = :fn AND e.extraction_method = 'lpc_mapping')
+""")
+
+
+def fill_column(conn, table, key, set_col, orig_col, original, value, scope, cc, entity_type, excerpt, conf):
+    """UPDATE d'une colonne normalisee pour toutes les lignes qui ont cette valeur d'origine ET une colonne NULL.
+
+    Renvoie la liste des identifiants modifies (pour les preuves et collection_runs).
+    """
+    rows = conn.execute(
+        text(f"UPDATE {table} SET {set_col} = :v WHERE {orig_col} = :o AND {set_col} IS NULL {scope} RETURNING {key}"),
+        {"v": value, "o": original, "cc": cc}).all()
+    ids = [r[0] for r in rows]
+    if ids:
+        conn.execute(EVIDENCE_FOR_IDS_SQL, {"et": entity_type, "ids": ids, "fn": set_col, "vo": original,
+                                            "ex": excerpt, "conf": conf})
+    return ids
+
+
+def normalize_uses_column(conn, label, orig_col, name_col, code_col, lookup, cc, touched, stats):
+    """Normalise crop_* ou target_* des usages, en regroupant par valeur distincte."""
+    values = conn.execute(text(f"""
+        SELECT {orig_col}, count(*) FROM uses
+        WHERE {orig_col} IS NOT NULL AND {orig_col} <> '' AND ({name_col} IS NULL OR {code_col} IS NULL) {USES_SCOPE}
+        GROUP BY {orig_col}"""), {"cc": cc}).all()
+    s = stats[label] = {"seen": len(values), "recognized": 0, "unrecognized": [], "updated": 0}
+    recognized = []
+    for value, n in values:
+        found = lookup(value)
+        if found:
+            recognized.append((value, found))
+        else:
+            s["unrecognized"].append((value, n))
+    s["recognized"] = len(recognized)
+    for start in range(0, len(recognized), BATCH):   # par lots : un commit apres chaque lot
+        for value, found in recognized[start:start + BATCH]:
+            note = f"mapping_status={found['mapping_status']}; eppo_code={found['eppo_code']}"
+            for column, new_value in ((name_col, found["normalized"]), (code_col, found["eppo_code"])):
+                if new_value:
+                    ids = fill_column(conn, "uses", "use_id", column, orig_col, value, new_value,
+                                      USES_SCOPE, cc, "use", note, None)
+                    touched["uses"].update(ids)
+                    s["updated"] += len(ids)
+        conn.commit()
+    s["unrecognized"].sort(key=lambda x: -x[1])
+
+
+def normalize_products_in_db(conn, cc, touched, stats):
+    """active_entity_normalized des produits (espece + souche si presente dans le texte d'origine)."""
+    values = conn.execute(text(f"""
+        SELECT active_entity_original, count(*) FROM products
+        WHERE active_entity_normalized IS NULL AND active_entity_original IS NOT NULL
+          AND active_entity_original <> '' {PRODUCTS_SCOPE}
+        GROUP BY active_entity_original"""), {"cc": cc}).all()
+    s = stats["active_entity"] = {"seen": len(values), "recognized": 0, "unrecognized": [], "updated": 0}
+    recognized = []
+    for value, n in values:
+        found = nz.normalize_active_entity(value)
+        if found:
+            recognized.append((value, found))
+        else:
+            s["unrecognized"].append((value, n))
+    s["recognized"] = len(recognized)
+    for start in range(0, len(recognized), BATCH):
+        for value, found in recognized[start:start + BATCH]:
+            normalized = f"{found['species']} {found['strain']}" if found["strain"] else found["species"]
+            note = f"matched_variant={found['matched_variant']}; review_status={found['review_status']}"
+            ids = fill_column(conn, "products", "product_id", "active_entity_normalized", "active_entity_original",
+                              value, normalized, PRODUCTS_SCOPE, cc, "product", note, found["confidence"])
+            touched["products"].update(ids)
+            s["updated"] += len(ids)
+        conn.commit()
+    s["unrecognized"].sort(key=lambda x: -x[1])
+
+
+def sisters_for_pilot_products(conn, cc):
+    """Candidats soeurs entre les produits pilotes LPC et les produits de la base de meme espece.
+
+    Renvoie (candidats proposes, alias reellement ajoutes).
+    """
+    columns = "product_id, commercial_name, active_entity_original, active_entity_normalized, is_synthetic"
+    pilot_ids = {r[0] for r in conn.execute(text("SELECT DISTINCT product_id FROM active_entity_mapping"))}
+    if not pilot_ids:
+        return 0, 0
+    pilots = [dict(r._mapping) for r in conn.execute(
+        text(f"SELECT {columns} FROM products WHERE product_id = ANY(:ids)"), {"ids": list(pilot_ids)})]
+    pilot_species = {e["species"] for e in map(nz.entity_of_product, pilots) if e}
+    others = conn.execute(text(f"""
+        SELECT {columns} FROM products
+        WHERE (active_entity_normalized IS NOT NULL OR active_entity_original IS NOT NULL)
+          AND NOT (product_id = ANY(:ids)) {PRODUCTS_SCOPE}"""), {"ids": list(pilot_ids), "cc": cc})
+    same_species = []
+    for row in others:
+        product = dict(row._mapping)
+        entity = nz.entity_of_product(product)
+        if entity and entity["species"] in pilot_species:
+            same_species.append(product)
+    # Seules les paires qui contiennent un produit pilote sont gardees (pas de paires entre tiers)
+    proposed, changed = write_sisters(conn, pilots + same_species, only_with_ids=pilot_ids)
+    conn.commit()
+    return proposed, changed
+
+
+def normalize_db(conn, country):
+    """Point d'entree du mode --normalize-db. Renvoie le dictionnaire de statistiques."""
+    started = datetime.now(timezone.utc)
+    touched = {"uses": set(), "products": set()}
+    stats = {}
+    normalize_uses_column(conn, "crop", "crop_name_original", "crop_name_normalized", "eppo_crop_code",
+                          nz.normalize_crop, country, touched, stats)
+    normalize_uses_column(conn, "target", "target_name_original", "target_name_normalized", "eppo_target_code",
+                          nz.normalize_target, country, touched, stats)
+    normalize_products_in_db(conn, country, touched, stats)
+    stats["sisters"] = sisters_for_pilot_products(conn, country)
+
+    # Une ligne collection_runs par source dont des lignes ont ete modifiees
+    per_source = Counter()
+    if touched["uses"]:
+        per_source.update(dict(conn.execute(text(
+            """SELECT r.source_id, count(*) FROM uses u JOIN registrations r USING (registration_id)
+               WHERE u.use_id = ANY(:ids) GROUP BY 1"""), {"ids": list(touched["uses"])}).all()))
+    if touched["products"]:
+        per_source.update(dict(conn.execute(text(
+            """SELECT source_id, count(DISTINCT product_id) FROM registrations
+               WHERE product_id = ANY(:ids) GROUP BY 1"""), {"ids": list(touched["products"])}).all()))
+    for source_id, n in per_source.items():
+        log_run(conn, source_id, started, "db:uses+products", n, n, "success", "normalize-db")
+    conn.commit()
+    stats["runs"] = dict(per_source)
+    return stats
+
+
+def print_normalize_summary(stats, country):
+    print("\n================ RESUME normalize-db" + (f" (pays {country})" if country else "") + " ================")
+    for label, title in (("crop", "Cultures"), ("target", "Cibles"), ("active_entity", "Substances actives (produits)")):
+        s = stats[label]
+        print(f"{title:<30} valeurs distinctes vues={s['seen']}  reconnues={s['recognized']}  "
+              f"non reconnues={len(s['unrecognized'])}  valeurs ecrites={s['updated']}")
+    proposed, added = stats["sisters"]
+    print(f"Produits soeurs candidats : {proposed} proposes, {added} alias ajoutes/mis a jour (to_verify)")
+    print("collection_runs ajoutes (lignes modifiees par source) :", stats["runs"] or "aucun (rien a mettre a jour)")
+    for label, title in (("crop", "cultures"), ("target", "cibles")):
+        print(f"\nTop 30 {title} NON reconnues (nb de lignes, valeur) :")
+        for value, n in stats[label]["unrecognized"][:30]:
+            print(f"  {n:>6}  {value}")
+        path = DATA / "merged" / f"unrecognized_{label}.csv"   # liste complete, pour le traitement IA ulterieur
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["value", "rows"])
+            writer.writerows(stats[label]["unrecognized"])
+        print(f"  (liste complete : {path.relative_to(ROOT)})")
+
+
+# ---------------------------------------------------------------------------
 # Programme principal
 # ---------------------------------------------------------------------------
 def main():
+    sys.stdout.reconfigure(errors="replace")   # la console Windows ne doit pas planter sur un caractere rare
     parser = argparse.ArgumentParser(description="Charge les CSV dans PostgreSQL (sans modifier le schéma).")
     parser.add_argument("--no-test", action="store_true", help="ignore data/incoming/test_*.csv")
     parser.add_argument("--reset-data", action="store_true", help="vide les données (pas le schéma), avec confirmation")
+    parser.add_argument("--normalize-db", action="store_true",
+                        help="normalise les lignes deja presentes en base (uses, products) au lieu de charger des CSV")
+    parser.add_argument("--country", help="avec --normalize-db : limite a un pays (code a 2 lettres, ex. FR)")
     args = parser.parse_args()
+    country = args.country.upper() if args.country else None
+    if country and (not args.normalize_db or len(country) != 2):
+        sys.exit("ERREUR : --country s'utilise avec --normalize-db et un code a 2 lettres (ex. FR).")
+    if args.normalize_db and args.reset_data:
+        sys.exit("ERREUR : --normalize-db et --reset-data ne se combinent pas.")
 
     load_dotenv(ROOT / ".env")
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
         sys.exit("ERREUR : DATABASE_URL absent. Copiez .env.example en .env et renseignez-le.")
     engine = create_engine(database_url)
+
+    if args.normalize_db:   # mode "base existante" : pas de lecture de CSV d'ingestion
+        with engine.connect() as conn:
+            check_schema(conn)
+            stats = normalize_db(conn, country)
+        print_normalize_summary(stats, country)
+        return
 
     rejected = []                     # lignes refusées (écrites dans rejected_rows.csv)
     written = Counter()               # table -> lignes écrites pendant ce lancement
@@ -442,9 +656,11 @@ def main():
                     conn.rollback()
                     read, accepted, status, notes = 0, [], "failed", f"{type(e).__name__}: {e}"[:500]
                     reject(rejected, path.name, table, 0, {}, notes)
+                # Les fichiers de test (donnees fictives) ne laissent AUCUNE trace dans collection_runs :
+                # cette table sert aux coequipiers a detecter les changements des vraies sources.
                 if prefix == "test":
-                    notes = ((notes + "; ") if notes else "") + "SYNTHETIC TEST DATA (lpc_etl)"
-                if prefix in SOURCE_BY_PREFIX:
+                    pass
+                elif prefix in SOURCE_BY_PREFIX:
                     log_run(conn, SOURCE_BY_PREFIX[prefix], started, f"data/incoming/{path.name}", read, len(accepted), status, notes)
                 else:
                     run_notes.append(f"{path.name}: préfixe inconnu, aucune ligne collection_runs écrite")
@@ -458,7 +674,7 @@ def main():
         # 3) Preuves des produits du kit + produits soeurs
         kit_ids = {("product", r["product_id"]) for r in loaded["products"]}
         written["field_evidence"] += write_evidence(conn, evidence, kit_ids)
-        written["product_aliases"] += write_sisters(conn, loaded["products"])
+        written["product_aliases"] += write_sisters(conn, loaded["products"])[0]
         conn.commit()
 
     # 4) Fichier des lignes rejetées (réécrit à chaque lancement)
